@@ -1,0 +1,354 @@
+/* 1. الإعدادات العامة والخطوط */
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+
+:root {
+    --primary-blue: #4f80ff;
+    --bg-gray: #f4f7fe;
+    --text-dark: #333;
+    --text-gray: #666;
+    --white: #ffffff;
+    --border-color: #eee;
+    --radius: 15px;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Cairo', sans-serif;
+}
+
+body {
+    background-color: var(--bg-gray);
+    color: var(--text-dark);
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 1300px; /* توسيع الحاوية قليلاً لمنع التزاحم */
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* 2. الهيدر (Header) - ترتيب جديد ومساحات مضبوطة */
+.main-header {
+    background: var(--white);
+    padding: 12px 0;
+    box-shadow: 0 2px 15px rgba(0,0,0,0.04);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 30px; /* مسافة بين الشعار والبحث */
+}
+
+.logo {
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--primary-blue);
+    cursor: pointer;
+}
+
+.search-bar {
+    position: relative;
+    width: 320px;
+}
+
+.search-bar i {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #999;
+}
+
+.search-bar input {
+    width: 100%;
+    padding: 10px 40px 10px 15px;
+    border-radius: 25px;
+    border: 1px solid var(--border-color);
+    background: #f8f9fa;
+    outline: none;
+    transition: 0.3s;
+}
+
+.search-bar input:focus {
+    border-color: var(--primary-blue);
+    background: #fff;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 25px;
+}
+
+.notifications {
+    position: relative;
+    font-size: 20px;
+    color: var(--primary-blue);
+    cursor: pointer;
+}
+
+.badge {
+    position: absolute;
+    top: -5px;
+    right: -8px;
+    background: #ff4d4d;
+    color: white;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-weight: bold;
+}
+
+.language-selector, .admin-profile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+}
+
+.flag { width: 22px; border-radius: 2px; }
+
+.admin-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--bg-gray);
+}
+
+.admin-info { text-align: right; }
+.admin-name { display: block; font-weight: 700; font-size: 14px; }
+.admin-role { font-size: 11px; color: var(--text-gray); }
+
+/* 3. تخطيط الصفحة (Layout) */
+.main-layout {
+    display: grid;
+    grid-template-columns: 280px 1fr 280px; /* توزيع متوازن */
+    gap: 30px; /* مسافة لمنع تداخل الأعمدة */
+    margin-top: 35px;
+    padding-bottom: 50px;
+}
+
+/* 4. البوكسات الرئيسية (Feed Cards) */
+.welcome-msg { 
+    margin-bottom: 25px; 
+    font-size: 26px; 
+    font-weight: 700; 
+}
+
+.post-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    display: flex;
+    flex-direction: row; /* الصورة يمين والنص يسار في RTL */
+    padding: 20px;
+    margin-bottom: 25px; /* مساحة بين البوكسات */
+    gap: 25px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+    border: 1px solid rgba(0,0,0,0.03);
+}
+
+.post-image { flex: 1; }
+.post-image img {
+    width: 100%;
+    height: 100%;
+    min-height: 200px;
+    object-fit: cover;
+    border-radius: 12px;
+}
+
+.post-details { 
+    flex: 1.6; 
+    display: flex;
+    flex-direction: column;
+}
+
+.post-header { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    margin-bottom: 12px; 
+}
+
+.category-tag {
+    background: rgba(79, 128, 255, 0.1);
+    color: var(--primary-blue);
+    padding: 5px 15px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.rating { 
+    display: flex; 
+    align-items: center; 
+    gap: 12px; 
+    margin-bottom: 15px;
+    padding: 8px 0;
+    border-bottom: 1px solid #f9f9f9;
+}
+
+.stars { color: #ffc107; font-size: 14px; }
+.mini-avatar { width: 28px; height: 28px; border-radius: 50%; }
+
+.description { 
+    font-size: 14px; 
+    color: var(--text-gray); 
+    line-height: 1.8; /* تباعد أسطر مريح */
+    margin-bottom: 20px; 
+}
+
+.post-actions { display: flex; gap: 15px; margin-top: auto; }
+
+.btn {
+    padding: 10px 20px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    transition: 0.3s;
+}
+
+.btn-blue { background: var(--primary-blue); color: white; }
+.btn-blue:hover { background: #3d6ae6; }
+.btn-outline { border: 1.5px solid var(--primary-blue); color: var(--primary-blue); background: none; }
+.btn-outline:hover { background: rgba(79, 128, 255, 0.05); }
+
+/* 5. القوائم الجانبية (Sidebars) */
+.btn-main-add {
+    width: 100%;
+    background: var(--primary-blue);
+    color: white;
+    padding: 16px;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 25px;
+    border-radius: var(--radius);
+    border: none;
+    box-shadow: 0 4px 15px rgba(79, 128, 255, 0.3);
+}
+
+.card {
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+}
+
+.filter-search { position: relative; margin-bottom: 20px; }
+.filter-search i { position: absolute; right: 12px; top: 12px; color: #aaa; }
+.filter-search input {
+    width: 100%;
+    padding: 10px 40px 10px 10px;
+    background: #f8f9fa;
+    border: 1px solid #eee;
+    border-radius: 10px;
+}
+
+.mini-post-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #f9fbff;
+    padding: 10px;
+    border-radius: 12px;
+    margin-bottom: 15px; /* مسافة بين عناصر البوكس الصغير */
+    border: 1px solid transparent;
+    transition: 0.3s;
+}
+
+.mini-post-item:hover { border-color: var(--primary-blue); }
+.mini-post-item img { width: 50px; height: 50px; border-radius: 8px; object-fit: cover; }
+.mini-post-item p { font-size: 13px; font-weight: 600; color: #444; }
+
+/* 6. تصنيفات اليمين */
+.categories-card li {
+    padding: 12px 15px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    color: #555;
+    cursor: pointer;
+    border-radius: 10px;
+    margin-bottom: 5px;
+    transition: 0.2s;
+}
+
+.categories-card li.active {
+    background: rgba(79, 128, 255, 0.08);
+    color: var(--primary-blue);
+    font-weight: 700;
+}
+
+/* 7. التجاوب مع الموبايل (Responsive) */
+@media (max-width: 1100px) {
+    .main-layout {
+        grid-template-columns: 1fr; /* إلغاء الأعمدة الجانبية ووضعها تحت بعض */
+        gap: 20px;
+    }
+    .sidebar-right, .sidebar-left { order: 2; }
+    .feed-content { order: 1; }
+}
+
+@media (max-width: 768px) {
+    .header-right { gap: 15px; }
+    .search-bar { width: 140px; }
+    .admin-info { display: none; } /* إخفاء اسم الأدمن في الشاشات الصغيرة جداً */
+    
+    .post-card {
+        flex-direction: column; /* الصورة فوق النص في الموبايل */
+        padding: 15px;
+    }
+    
+    .post-image img {
+        height: 180px;
+    }
+    
+    .welcome-msg { font-size: 20px; }
+}
+
+/* تنسيق قسم الفلترة الجديد */
+.filter-section {
+    display: flex;
+    justify-content: space-between; /* لعمل مسافة بين الكلمتين */
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 0 5px;
+}
+
+.filter-label {
+    font-size: 14px;
+    color: var(--text-dark);
+    font-weight: 700;
+}
+
+.filter-active {
+    font-size: 13px;
+    color: var(--text-gray);
+    position: relative;
+    cursor: pointer;
+}
+
+/* إضافة الخط المنقط تحت الأعلى تقييماً كما في الصورة */
+.filter-active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    right: 0;
+    width: 100%;
+    border-bottom: 1px dotted var(--text-gray);
+}
