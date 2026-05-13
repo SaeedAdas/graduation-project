@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ملتقى - لوحة التحكم</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="/dashboard/dashboard/style.css">
+</head>
+
+<body>
+
+    <div class="mobile-header">
+        <button id="menuBtn"><i class="fas fa-bars"></i></button>
+        <h1 class="logo-text">ملتقى</h1>
+        <img src="/dashboard/dashboard/bf53d8345ff5ddcabab44f2b75ef32e5a9d429c7.png" class="user-avatar-small" alt="Admin">
+    </div>
+
+    <div class="container">
+        <aside id="sidebar" class="sidebar">
+            <div class="sidebar-logo"><h1>ملتقى</h1></div>
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active" data-target="dashboard"><i class="fas fa-th-large"></i><span>لوحة التحكم</span></a>
+                <a href="#" class="nav-item" data-target="users"><i class="fas fa-users"></i><span>المستخدمين</span></a>
+                <a href="#" class="nav-item" data-target="categories"><i class="fas fa-shapes"></i><span>التصنيفات</span></a>
+                <a href="#" class="nav-item" data-target="reports"><i class="fas fa-file-alt"></i><span>البلاغات</span></a>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-header">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="بحث">
+                </div>
+                <div class="header-actions">
+                    <div class="notifications"><i class="far fa-bell"></i><span class="badge">6</span></div>
+                    <div class="language-selector">
+                        <img src="https://flagcdn.com/w40/ps.png" alt="Palestine">
+                        <span>العربية</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="user-profile">
+                        <div class="user-info">
+                            <div class="user-details">
+                                <span class="user-name">سعيد حسن</span>
+                                <span class="user-role">أدمن</span>
+                            </div>
+                        </div>
+                        <img src="/dashboard/dashboard/bf53d8345ff5ddcabab44f2b75ef32e5a9d429c7.png" alt="User">
+                        <i class="fas fa-chevron-down user-icon"></i>
+                    </div>
+                </div>
+            </header>
+
+            <!-- ====== لوحة التحكم ====== -->
+            <section id="dashboard">
+                <h2 class="page-title">لوحة التحكم</h2>
+
+                <div class="stats-grid">
+                    <div class="card"><div class="card-header"><div class="icon-box orange"><i class="fas fa-th-large"></i></div><div class="card-text"><p>التصنيفات</p><h3>266</h3></div></div><div class="card-footer up"><span>1.8% مراجعة إضافية</span></div></div>
+                    <div class="card"><div class="card-header"><div class="icon-box green"><i class="fas fa-user-check"></i></div><div class="card-text"><p>عدد المراجعات</p><h3>185,564</h3></div></div><div class="card-footer down"><span>4.3% هبوط</span></div></div>
+                    <div class="card"><div class="card-header"><div class="icon-box yellow"><i class="fas fa-file-invoice"></i></div><div class="card-text"><p>البلاغات</p><h3>2541</h3></div></div><div class="card-footer up"><span>1.3% زيادة</span></div></div>
+                    <div class="card"><div class="card-header"><div class="icon-box indigo"><i class="fas fa-users"></i></div><div class="card-text"><p>المستخدمين</p><h3>40,689</h3></div></div><div class="card-footer up"><span>8.5% مستخدمون جدد</span></div></div>
+                </div>
+
+                <div class="table-container">
+                    <div class="table-header-flex">
+                        <div class="header-right-side">
+                            <h3 class="table-title">المستخدمين</h3>
+                            <div class="table-search"><i class="fas fa-search"></i><input type="text" placeholder="بحث"></div>
+                        </div>
+                        <div class="table-controls-row">
+                            <div class="filter-dropdown">
+                                <select>
+                                    <option value="">اختر حالة</option>
+                                    <option>فعال</option><option>مجمد</option><option>متوقف</option><option>غير فعال</option>
+                                </select>
+                            </div>
+                            <div class="filter-dropdown">
+                                <select>
+                                    <option value="">اختر شهر</option>
+                                    <option>يناير</option><option>فبراير</option><option>مارس</option><option>أبريل</option>
+                                    <option>مايو</option><option>يونيو</option><option>يوليو</option><option>أغسطس</option>
+                                    <option>سبتمبر</option><option>أكتوبر</option><option>نوفمبر</option><option>ديسمبر</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="users-table">
+                            <thead>
+                                <tr><th>المستخدم</th><th>المدينة</th><th>المراجعات</th><th>التصنيفات</th><th>مستفيدين</th><th>الحالة</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td><div class="user-cell"><img src="/dashboard/dashboard/b09a67c7b12c248bcdf97b21ac58d52a4d76a275.png"><span>محمد عباس</span></div></td><td>غزة - تل الهوى</td><td>320 مراجعة</td><td>12 تصنيف</td><td>2,541 مستفيد</td><td><span class="status-badge active">فعال</span></td></tr>
+                                <tr><td><div class="user-cell"><img src="/dashboard/dashboard/b09a67c7b12c248bcdf97b21ac58d52a4d76a275.png"><span>محمد عباس </span></div></td><td>غزة - تل الهوى</td><td>250 مراجعة</td><td>8 تصنيفات</td><td>1,850 مستفيد</td><td><span class="status-badge frozen">مجمد</span></td></tr>
+                                <tr><td><div class="user-cell"><img src="/dashboard/dashboard/b09a67c7b12c248bcdf97b21ac58d52a4d76a275.png"><span> محمد عباس</span></div></td><td>غزة  - تل الهوى</td><td>420 مراجعة</td><td>15 تصنيف</td><td>3,200 مستفيد</td><td><span class="status-badge stopped">متوقف</span></td></tr>
+                                <tr><td><div class="user-cell"><img src="/dashboard/dashboard/b09a67c7b12c248bcdf97b21ac58d52a4d76a275.png"><span> محمد عباس</span></div></td><td>غزة - تل الهوى</td><td>180 مراجعة</td><td>6 تصنيفات</td><td>1,200 مستفيد</td><td><span class="status-badge frozen">مجمد</span></td></tr>
+                                <tr><td><div class="user-cell"><img src="/dashboard/dashboard/b09a67c7b12c248bcdf97b21ac58d52a4d76a275.png"><span>محمد عباس </span></div></td><td> غزة - تل الهوى</td><td>290 مراجعة</td><td>11 تصنيف</td><td>2,100 مستفيد</td><td><span class="status-badge stopped">متوقف</span></td></tr>
+                                <tr><td><div class="user-cell"><img src="/dashboard/dashboard/b09a67c7b12c248bcdf97b21ac58d52a4d76a275.png"><span> محمد عباس</span></div></td><td>غزة - تل الهوى</td><td>510 مراجعة</td><td>19 تصنيف</td><td>4,050 مستفيد</td><td><span class="status-badge active">فعال</span></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="table-pagination-flex">
+                        <div class="pagination-info">يعرض الجدول 6 حقول فقط</div>
+                        <div class="pagination-numbers">
+                            <a href="#"><i class="fas fa-chevron-right"></i></a>
+                            <a href="#">3</a><a href="#">2</a><a href="#" class="active">1</a>
+                            <a href="#"><i class="fas fa-chevron-left"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ====== صفحة المستخدمين ====== -->
+            <section id="users">
+                <br>
+                
+                <h2 class="page-title">لوحة التحكم</h2>
+
+                <div class="table-container">
+                    <div class="table-header-flex">
+                        <div class="header-right-side">
+                            <h3 class="table-title">المستخدمين</h3>
+                            <div class="table-search"><i class="fas fa-search"></i><input type="text" placeholder="بحث"></div>
+                        </div>
+                        <div class="table-controls-row">
+                            <div class="filter-dropdown">
+                                <select>
+                                    <option value="">اختر حالة</option>
+                                    <option>فعال</option><option>مجمد</option><option>متوقف</option><option>غير فعال</option>
+                                </select>
+                            </div>
+                            <div class="filter-dropdown">
+                                <select>
+                                    <option value="">اختر شهر</option>
+                                    <option>يناير</option><option>فبراير</option><option>مارس</option><option>أبريل</option>
+                                    <option>مايو</option><option>يونيو</option><option>يوليو</option><option>أغسطس</option>
+                                    <option>سبتمبر</option><option>أكتوبر</option><option>نوفمبر</option><option>ديسمبر</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="users-table">
+                            <thead>
+                                <tr><th>المستخدم</th><th>المدينة</th><th>المراجعات</th><th>التصنيفات</th><th>مستفيدين</th><th>الحالة</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td><div class="user-cell"><img src="/dashboard/dashboard/b09a67c7b12c248bcdf97b21ac58d52a4d76a275.png"><span>محمد عباس</span></div></td><td>غزة - تل الهوى</td><td>320 مراجعة</td><td>12 تصنيف</td><td>2,541 مستفيد</td><td><span class="status-badge active">فعال</span></td></tr>
+                                <tr><td><div class="user-cell"><img src="/dashboard/dashboard/b09a67c7b12c248bcdf97b21ac58d52a4d76a275.png"><span>محمد عباس</span></div></td><td>غزة - تل الهوى</td><td>320 مراجعة</td><td>12 تصنيف</td><td>2,541 مستفيد</td><td><span class="status-badge frozen">مجمد</span></td></tr>
+                                <tr><td><div class="user-cell"><img src="/dashboard/dashboard/b09a67c7b12c248bcdf97b21ac58d52a4d76a275.png"><span>محمد عباس</span></div></td><td>غزة - تل الهوى</td><td>320 مراجعة</td><td>12 تصنيف</td><td>2,541 مستفيد</td><td><span class="status-badge stopped">متوقف</span></td></tr>
+                                <tr><td><div class="user-cell"><img src="/dashboard/dashboard/b09a67c7b12c248bcdf97b21ac58d52a4d76a275.png"><span>محمد عباس</span></div></td><td>غزة - تل الهوى</td><td>320 مراجعة</td><td>12 تصنيف</td><td>2,541 مستفيد</td><td><span class="status-badge frozen">مجمد</span></td></tr>
+                                <tr><td><div class="user-cell"><img src="/dashboard/dashboard/b09a67c7b12c248bcdf97b21ac58d52a4d76a275.png"><span>محمد عباس</span></div></td><td>غزة - تل الهوى</td><td>320 مراجعة</td><td>12 تصنيف</td><td>2,541 مستفيد</td><td><span class="status-badge stopped">متوقف</span></td></tr>
+                                <tr><td><div class="user-cell"><img src="/dashboard/dashboard/b09a67c7b12c248bcdf97b21ac58d52a4d76a275.png"><span>محمد عباس</span></div></td><td>غزة - تل الهوى</td><td>320 مراجعة</td><td>12 تصنيف</td><td>2,541 مستفيد</td><td><span class="status-badge active">فعال</span></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="table-pagination-flex">
+                        <div class="pagination-info">يعرض الجدول 6 حقول فقط</div>
+                        <div class="pagination-numbers">
+                            <a href="#"><i class="fas fa-chevron-right"></i></a>
+                            <a href="#">3</a><a href="#">2</a><a href="#" class="active">1</a>
+                            <a href="#"><i class="fas fa-chevron-left"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ====== صفحة التصنيفات ====== -->
+            <section id="categories">
+                <div class="page-title-header">
+                    <h2 class="page-title">لوحة التحكم</h2>
+                    <button class="add-btn"><i class="fas fa-plus"></i> إضافة تصنيف جديد</button>
+                </div>
+
+                <div class="table-container">
+                    <div class="table-header-flex">
+                        <div class="header-right-side">
+                            <h3 class="table-title">التصنيفات</h3>
+                            <div class="table-search"><i class="fas fa-search"></i><input type="text" placeholder="بحث"></div>
+                        </div>
+                        <div class="table-controls-row">
+                            <div class="filter-dropdown">
+                                <select>
+                                    <option value="">اختر حالة</option>
+                                    <option>فعال</option><option>مجمد</option><option>متوقف</option><option>غير فعال</option>
+                                </select>
+                            </div>
+                            <div class="filter-dropdown">
+                                <select>
+                                    <option value="">اختر شهر</option>
+                                    <option>يناير</option><option>فبراير</option><option>مارس</option><option>أبريل</option>
+                                    <option>مايو</option><option>يونيو</option><option>يوليو</option><option>أغسطس</option>
+                                    <option>سبتمبر</option><option>أكتوبر</option><option>نوفمبر</option><option>ديسمبر</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="users-table">
+                            <thead>
+                                <tr><th>التصنيف</th><th> المنشورات المرتبطة</th><th>الناشطين</th><th>المهتمين</th><th>الحالة</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td><span> الإلكترونيات</span></td><td>2521 منشور</td><td>320 ناشط</td><td>125 مستخدم </td><td><span class="status-badge active">فعال</span></td></tr>
+                                <tr><td><span> الكاميرات</span></td><td> 2521 منشور </td><td>320 ناشط</td><td>125 مستخدم </td><td><span class="status-badge frozen">مجمد</span></td></tr>
+                                <tr><td><span> الهواتف</span></td><td> 2521 منشور</td><td>320 ناشط</td><td>125 مستخدم </td><td><span class="status-badge stopped">متوقف</span></td></tr>
+                                <tr><td><span> الاحذية</span></td><td> 2521 منشور</td><td>320 ناشط</td><td>125 مستخدم </td><td><span class="status-badge frozen">مجمد</span></td></tr>
+                                <tr><td><span> الحواسيب</span></td><td> 2521 منشور  </td><td>320 ناشط</td><td>125 مستخدم </td><td><span class="status-badge stopped">متوقف</span></td></tr>
+                                <tr><td><span> الملابس</span></td><td> 2521 منشور </td><td>320 ناشط</td><td>125 مستخدم </td><td><span class="status-badge active">فعال</span></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="table-pagination-flex">
+                        <div class="pagination-info">يعرض الجدول 6 حقول فقط</div>
+                        <div class="pagination-numbers">
+                            <a href="#"><i class="fas fa-chevron-right"></i></a>
+                            <a href="#">3</a><a href="#">2</a><a href="#" class="active">1</a>
+                            <a href="#"><i class="fas fa-chevron-left"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ====== صفحة البلاغات ====== -->
+            <section id="reports">
+                <br>
+                <h2 class="page-title">لوحة التحكم</h2>
+
+                <div class="table-container">
+                    <div class="table-header-flex">
+                        <div class="header-right-side">
+                            <br>
+                            <h3 class="table-title">الإبلاغات</h3>
+                            <div class="table-search"><i class="fas fa-search"></i><input type="text" placeholder="بحث"></div>
+                        </div>
+                        <div class="table-controls-row">
+                            <div class="filter-dropdown">
+                                <select>
+                                    <option value="">اختر حالة</option>
+                                    <option>فعال</option><option>مجمد</option><option>متوقف</option><option>غير فعال</option>
+                                </select>
+                            </div>
+                            <div class="filter-dropdown">
+                                <select>
+                                    <option value="">اختر شهر</option>
+                                    <option>يناير</option><option>فبراير</option><option>مارس</option><option>أبريل</option>
+                                    <option>مايو</option><option>يونيو</option><option>يوليو</option><option>أغسطس</option>
+                                    <option>سبتمبر</option><option>أكتوبر</option><option>نوفمبر</option><option>ديسمبر</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="users-table">
+                            <thead>
+                                <tr><th>المنشور</th><th>الناشر</th><th>المبلغ</th><th>مستفيدين</th><th>لينك المنشور</th><th>الحالة</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td><div class="user-cell"><img src="/dashboard/dashboard/540a41037299a3968030e74e6c12655ad82a083c.png"><span> كامبيرا sony Z5 إص..</span></div></td><td>سعيد عباس</td><td>أمجد سليمان </td><td> 2,541 مستفيد</td><td><u style="cursor: pointer;">لينك المنشور</u></td><td><span class="status-badge active">فعال</span></td></tr>
+                                <tr><td><div class="user-cell"><img src="/dashboard/dashboard/540a41037299a3968030e74e6c12655ad82a083c.png"><span> كامبيرا sony Z5 إص..</span></div></td><td>سعيد عباس </td><td>أمجد سليمان</td><td>2,541 مستفيد</td><td><u style="cursor: pointer;">لينك المنشور</u></td><td><span class="status-badge frozen">مجمد</span></td></tr>
+                                <tr><td><div class="user-cell"><img src="/dashboard/dashboard/540a41037299a3968030e74e6c12655ad82a083c.png"><span>كامبيرا sony Z5 إص.. </span></div></td><td>سعيد عباس</td><td>أمجد سليمان</td><td>2,541 مستفيد</td><td> <u style="cursor: pointer;">لينك المنشور</u></td><td><span class="status-badge stopped">متوقف</span></td></tr>
+                                <tr><td><div class="user-cell"><img src="/dashboard/dashboard/540a41037299a3968030e74e6c12655ad82a083c.png"><span>كامبيرا sony Z5 إص.. </span></div></td><td>سعيد عباس</td><td> أمجد سليمان</td><td>2,541 مستفيد</td><td><u style="cursor: pointer;">لينك المنشور</u></td><td><span class="status-badge frozen">مجمد</span></td></tr>
+                                <tr><td><div class="user-cell"><img src="/dashboard/dashboard/540a41037299a3968030e74e6c12655ad82a083c.png"><span>كامبيرا sony Z5 إص.. </span></div></td><td>سعيد عباس </td><td>أمجد سليمان </td><td>2,541 مستفيد</td><td><u style="cursor: pointer;">لينك المنشور</u></td><td><span class="status-badge stopped">متوقف</span></td></tr>
+                                <tr><td><div class="user-cell"><img src="/dashboard/dashboard/540a41037299a3968030e74e6c12655ad82a083c.png"><span> كامبيرا sony Z5 إص..</span></div></td><td> سعيد عباس</td><td>أمجد سليمان</td><td>2,541 مستفيد</td><td><u style="cursor: pointer;">لينك المنشور</u></td><td><span class="status-badge active">فعال</span></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="table-pagination-flex">
+                        <div class="pagination-info">يعرض الجدول 6 حقول فقط</div>
+                        <div class="pagination-numbers">
+                            <a href="#"><i class="fas fa-chevron-right"></i></a>
+                            <a href="#">3</a><a href="#">2</a><a href="#" class="active">1</a>
+                            <a href="#"><i class="fas fa-chevron-left"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+    <div id="overlay" class="overlay"></div>
+
+    <script src="/dashboard/dashboard/script.js"></script>
+</body>
+</html>
