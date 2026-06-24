@@ -1,7 +1,7 @@
 const bcrypt = require("bcryptjs");
 const prisma = require("../config/connection");
 const messages = require("../helper/messages");
-const { generateToken, cookieName, cookieOptions } = require("../middlewares/csrf");
+const { rotateCsrfToken } = require("../middlewares/csrf");
 
 const HASH_COST_FACTOR = 12;
 
@@ -58,7 +58,7 @@ const login = async (req, res) => {
 			return messages.alreadyExists(res, "User is logged in already");
 		}
 
-		const { email, password } = req.body;
+		const { email, password, rememberMe } = req.body;
 
 		const user = await prisma.user.findUnique({
 			where: { email },
@@ -91,13 +91,17 @@ const login = async (req, res) => {
 			req.session.email = user.email;
 			req.session.role = user.role ? user.role : null;
 
+			const csrfToken = rotateCsrfToken(req);
+
+			// make session temporary
+			if (!rememberMe) {
+				req.session.cookie.maxAge = null;
+			}
+
 			req.session.save((error) => {
 				if (error) {
 					return messages.serverError(res);
 				}
-
-				// Issues and overwrites a new token everytime it's invoked
-				const csrfToken = generateToken(req, res, true);
 
 				return res.json({
 					message: "Login Successful",
@@ -306,9 +310,6 @@ const logout = (req, res) => {
 			secure: process.env.NODE_ENV === "production",
 			sameSite: process.env.NODE_ENV === "production" ? "none" : "lax"
 		});
-
-		// Deletes CSRF token cookie
-		res.clearCookie(cookieName, cookieOptions);
 
 		return res.json({
 			message: "Logged out successfully"

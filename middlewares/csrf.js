@@ -1,32 +1,66 @@
-const { doubleCsrf } = require("csrf-csrf");
+const crypto = require("crypto");
+const messages = require("../helper/messages");
 
-const cookieName = process.env.NODE_ENV === "production" ? "__Host-psifi.x-csrf-token" : "psifi.x-csrf-token";
-const cookieOptions = {
-	httpOnly: true,
-	sameSite: "lax",
-	secure: true,
-	maxAge: 1000 * 60 * 60 * 24 * 7,
-	path: "/"
-};
+const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 
+function createCsrfToken() {
+	return crypto.randomBytes(32).toString("base64url");
+}
 
+function getOrCreateCsrfToken(req) {
+	if (!req.session) {
+		return messages.Unauthenticated("Session middleware must be registered before CSRF middleware");
+  	}
 
-const {
-	generateToken,
-	doubleCsrfProtection
-} = doubleCsrf({
-	getSecret: () => process.env.CSRF_SECRET,
-	getSessionIdentifier: (req) => req.sessionID, //Bind CSRF token to current session ID
-	cookieName,
-	cookieOptions,
-        size: 64,
-        ignoredMethods: ["GET", "HEAD", "OPTIONS"],
-	getTokenFromRequest: (req) => req.headers["x-csrf-token"]
-});
-	
+  	if (!req.session.csrfToken) {
+    		req.session.csrfToken = createCsrfToken();
+  	}
+
+  	return req.session.csrfToken;
+}
+
+// a method to match csrf tokens
+function constantTimeEqual(a, b) {
+ 	if (typeof a !== "string" || typeof b !== "string") {
+    		return false;
+  	}
+
+  	const aBuffer = Buffer.from(a);
+  	const bBuffer = Buffer.from(b);
+
+  	if (aBuffer.length !== bBuffer.length) {
+    		return false;
+  	}
+
+  	return crypto.timingSafeEqual(aBuffer, bBuffer);
+}
+
+function csrfProtection(req, res, next) {
+ 	if (SAFE_METHODS.has(req.method)) {
+    		return next();
+  	}
+
+  	if (!req.session) {
+		return messages.Unauthenticated();
+  	}
+
+  	const sessionToken = req.session.csrfToken;
+  	const requestToken = req.get("x-csrf-token");
+
+  	if (!sessionToken || !requestToken || !constantTimeEqual(sessionToken, requestToken)) {
+		return messages.Unauthorized("Invalid CSRF token");
+  	}
+
+  	return next();
+}
+
+function rotateCsrfToken(req) {
+  	req.session.csrfToken = createCsrfToken();
+  	return req.session.csrfToken;
+}
+
 module.exports = {
-	generateToken,
-	doubleCsrfProtection,
-	cookieName,
-	cookieOptions
+  	getOrCreateCsrfToken,
+  	csrfProtection,
+  	rotateCsrfToken
 };
