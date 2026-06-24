@@ -2,9 +2,8 @@ const express = require("express");
 const cors = require("cors");
 const session = require("express-session");
 const pgSession = require("connect-pg-simple")(session);
-const cookieParser = require("cookie-parser");
 const { Pool } = require("pg");
-const { generateToken, doubleCsrfProtection } = require("./middlewares/csrf");
+const {	getOrCreateCsrfToken, csrfProtection } = require("./middlewares/csrf");
 
 const router = require('./router');
 
@@ -39,36 +38,29 @@ app.use(session({
 	proxy: true,
 	cookie: {
 		httpOnly: true,
-		secure: true,
+		secure: process.env.NODE_ENV === "production",
 		sameSite: "lax",
 		path: "/",
 		maxAge: 1000 * 60 * 60 * 24 * 7
 	}
 }));
 
-app.use(cookieParser());
 
-app.get("/csrf-token", (req, res) => {
-	req.session.csrfInitialized = true; // forces Express to save the session and send the sid cookie.
+app.get("/csrf-token", (req, res, next) => {
+	try {
+    		const csrfToken = getOrCreateCsrfToken(req);
 
-	req.session.save((error) => {
-		if (error) {
-			return res.status(500).json({ message: "Could not initialize CSRF" });
-		}
+		// force-save CSRF-token in req.session.csrfToken before sending to client
+    		req.session.save((error) => {
+      			if (error) {
+        			return next(error);
+      			}
 
-		try {
-			const overwrite = false;
-			const validateOnReuse = false;
-			
-			// this issues a new token if it's only invalid, the older version crashed the app when the token is invalid
-			const csrfToken = generateToken(req, res, overwrite, validateOnReuse);
-
-			return res.json({csrfToken});
-
-		} catch (error) {
-			return next(error);
-		}
-	});
+      			return res.json({ csrfToken });
+    		});
+  	} catch (error) {
+    		return next(error);
+  	}
 });
 
 app.get("/keep-alive", (req, res) => {
@@ -77,10 +69,19 @@ app.get("/keep-alive", (req, res) => {
 	})
 });
 
-app.use(doubleCsrfProtection);
+app.use(csrfProtection);
 
 
 app.use("/", router);
+
+app.use((error, req, res, next) => {
+	console.error(error);
+
+  	return res.status(500).json({
+    		message: "Internal server error"
+  	});
+});
+
 
 
 const PORT = process.env.PORT || 5000;
