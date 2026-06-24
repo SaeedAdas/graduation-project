@@ -25,15 +25,15 @@ exports.badRequest = (res, message = "Bad request") => {
 	});
 };
 
-exports.Unauthenticated = (res) => {
+exports.Unauthenticated = (res, message = "Unauthenticated") => {
 	res.status(401).json({
-		message: "Unauthenticated"
+		message
 	});
 };
 
-exports.Unauthorized = (res) => {
+exports.Unauthorized = (res, message = "Forbidden") => {
 	res.status(403).json({
-		message: "Forbidden"
+		message
 	});
 };
 
