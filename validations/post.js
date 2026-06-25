@@ -15,7 +15,7 @@ const postSchema = z.object({
 		.min(8, "Minimum length of description is 8")
 		.max(1000, "Maxmimum length of description is 1000")
 		.optional()
-}).strict();
+});
 
 const create = postSchema;
 
