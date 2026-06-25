@@ -48,7 +48,7 @@ app.use(session({
 
 app.get("/csrf-token", (req, res, next) => {
 	try {
-    		const csrfToken = getOrCreateCsrfToken(req);
+    		const csrfToken = getOrCreateCsrfToken(req, res);
 
 		// force-save CSRF-token in req.session.csrfToken before sending to client
     		req.session.save((error) => {

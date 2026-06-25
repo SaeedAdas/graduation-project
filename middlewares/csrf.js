@@ -7,9 +7,9 @@ function createCsrfToken() {
 	return crypto.randomBytes(32).toString("base64url");
 }
 
-function getOrCreateCsrfToken(req) {
+function getOrCreateCsrfToken(req, res) {
 	if (!req.session) {
-		return messages.Unauthenticated("Session middleware must be registered before CSRF middleware");
+		return messages.Unauthenticated(res, "Session middleware must be registered before CSRF middleware");
   	}
 
   	if (!req.session.csrfToken) {
@@ -41,14 +41,14 @@ function csrfProtection(req, res, next) {
   	}
 
   	if (!req.session) {
-		return messages.Unauthenticated();
+		return messages.Unauthenticated(res);
   	}
 
   	const sessionToken = req.session.csrfToken;
   	const requestToken = req.get("x-csrf-token");
 
   	if (!sessionToken || !requestToken || !constantTimeEqual(sessionToken, requestToken)) {
-		return messages.Unauthorized("Invalid CSRF token");
+		return messages.Unauthorized(res, "Invalid CSRF token");
   	}
 
   	return next();
