@@ -39,6 +39,8 @@ router.post("/auth/login", validate(userValidation.login), userController.login)
 router.post("/user/register", validate(userValidation.register), userController.register);
 router.post("/auth/logout", authenticate, userController.logout);
 router.get("/user/profile", authenticate, userController.profile);
+router.get("/my-posts", authenticate, userController.posts);
+router.put("/user/profile", authenticate, validate(userValidation.update), userController.update_profile);
 
 router.post("/post", authenticate, validate(postValidation.create), authorize("posts", "create"), postController.create);
 router.get("/post/:id", authenticate, validate(), loadPost, authorize("posts", "view"), postController.retrieve);

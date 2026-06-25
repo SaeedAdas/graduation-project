@@ -272,6 +272,102 @@ const profile = async (req, res) => {
 
 /**
  * @openapi
+ * /user/profile:
+ *   put:
+ *     summary: Update a user profile
+ *     description: Updates a user profile data
+ *     tags:
+ *       - User
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               full_name:
+ *                 type: string
+ *                 example: Ahmad mohammed
+ *               phone:
+ *                 type: number
+ *                 example: 0591234567
+ *               birthdate:
+ *                 type: string
+ *                 example: Updated post description
+ *               city:
+ *                 type: string
+ *                 example: Updated post description
+ *               bio:
+ *                 type: string
+ *                 example: Updated post description
+ *     responses:
+ *       200:
+ *         description: Post updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Post updated successfully
+ *       400:
+ *         description: Bad request / validation error
+ *       401:
+ *         description: Unauthorized
+ */
+
+const update_profile = async (req, res) => {
+	try {
+
+		const id = req.user.id;
+
+		const { full_name, phone, birthdate, city, bio } = req.body;
+
+		const user = await prisma.user.update({
+			where: {id},
+			data: {
+				full_name,
+				phone,
+				birthdate,
+				city,
+				bio
+			}
+		});
+
+		return res.json(user);
+
+	} catch (error) {
+		console.error("Updating Profile error:", error);
+
+		return messages.serverError(res);
+	}
+};
+
+const posts = async (req, res) => {
+	try {
+
+		const id = req.user.id;
+
+		//const { page, limit } = req.query;
+	
+		const posts = await prisma.post.findMany({
+			where: {user_id: id}
+		});
+
+		return res.json(posts);
+
+	} catch (error) {
+		console.error("Updating Profile error:", error);
+
+		return messages.serverError(res);
+	}
+};
+
+/**
+ * @openapi
  * /auth/logout:
  *   post:
  *     summary: Logout user
@@ -321,5 +417,7 @@ module.exports = {
 	login,
 	register,
 	profile,
-	logout
+	update_profile,
+	logout,
+	posts
 };
