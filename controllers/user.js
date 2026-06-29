@@ -55,7 +55,7 @@ const login = async (req, res) => {
 		const isAuthenticated = req.session.user_id;
 		
 		if (isAuthenticated) {
-			return messages.alreadyExists(res, "User is logged in already");
+			return messages.alreadyExists(res, "You are already logged in.");
 		}
 
 		const { email, password, rememberMe } = req.body;
@@ -88,8 +88,6 @@ const login = async (req, res) => {
 			}
 
 			req.session.user_id = user.id;
-			req.session.email = user.email;
-			req.session.role = user.role ? user.role : null;
 
 			const csrfToken = rotateCsrfToken(req);
 

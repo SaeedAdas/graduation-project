@@ -8,7 +8,8 @@ const register = z.object({
 
 const login = z.object({
 	email: z.email(),
-        password: z.string().min(8)
+        password: z.string().min(8),
+	rememberMe: z.boolean()
 });
 
 const update = z.object({
