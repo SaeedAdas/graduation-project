@@ -355,6 +355,10 @@ const posts = async (req, res) => {
 			where: {userId: id},
 			orderBy: {"createdAt": "desc"},
 			select: {
+				title: true,
+				category: true,
+				description: true,
+				createdAt: true,
 				_count: {
 					select: {
 						comments: true,
