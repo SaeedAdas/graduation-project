@@ -352,7 +352,16 @@ const posts = async (req, res) => {
 		//const { page, limit } = req.query;
 	
 		const posts = await prisma.post.findMany({
-			where: {user_id: id}
+			where: {userId: id},
+			orderBy: {"createdAt": "desc"},
+			select: {
+				_count: {
+					select: {
+						comments: true,
+						reactions: true
+					}
+				}
+			}
 		});
 
 		return res.json(posts);
