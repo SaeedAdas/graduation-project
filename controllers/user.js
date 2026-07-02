@@ -349,10 +349,27 @@ const posts = async (req, res) => {
 
 		const id = req.user.id;
 
-		//const { page, limit } = req.query;
+		let { page, limit } = req.query;
+
+		page = Number(page);
+		limit = Number(limit);
+
+		// TODO Implement a proper input validation rules for queries
+		if (
+			  !Number.isInteger(pageNum) ||
+			  !Number.isInteger(limitNum) ||
+			  pageNum < 1 ||
+			  limitNum < 1
+		) {
+			  return messages.badRequest(res, "Page and limit should be positive integers");
+		}
+
+		const skip = (page - 1) * limit;
 	
 		const posts = await prisma.post.findMany({
 			where: {userId: id},
+			skip,
+			take: limit,
 			orderBy: {"createdAt": "desc"},
 			select: {
 				title: true,
