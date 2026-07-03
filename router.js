@@ -166,7 +166,7 @@ router.get(
 router.put(
 	"/report/:id", 
 	authenticate, 
-	validate({ body: reportValidation.update, , params: parameterValidation.id }), 
+	validate({ body: reportValidation.update, params: parameterValidation.id }), 
 	loadReport, 
 	authorize("reports", "update"), 
 	reportController.update
