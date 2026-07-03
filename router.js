@@ -10,6 +10,8 @@ const postValidation = require("./validations/post");
 const commentValidation = require("./validations/comment");
 const reportValidation = require("./validations/report");
 const reactionValidation = require("./validations/reaction");
+const parameterValidation = require("./validations/parameter");
+const queryValidation = require("./validations/query");
 const { authenticate } = require("./middlewares/authenticate");
 const { authorize } = require("./middlewares/authorize");
 const { validate } = require("./middlewares/validate");
@@ -35,32 +37,185 @@ router.use("/api-docs", authenticate, authorize("api", "view"), swaggerUi.serve,
 
 // Routes
 
-router.post("/auth/login", validate(userValidation.login), userController.login);
-router.post("/user/register", validate(userValidation.register), userController.register);
-router.post("/auth/logout", authenticate, userController.logout);
-router.get("/user/profile", authenticate, userController.profile);
-router.get("/my-posts", authenticate, userController.posts);
-router.put("/user/profile", authenticate, validate(userValidation.update), userController.update_profile);
+router.post(
+	"/auth/login", 
+	validate({ body: userValidation.login }), 
+	userController.login
+);
 
-router.post("/post", authenticate, validate(postValidation.create), authorize("posts", "create"), postController.create);
-router.get("/post/:id", authenticate, validate(), loadPost, authorize("posts", "view"), postController.retrieve);
-router.put("/post/:id", authenticate, validate(postValidation.update), loadPost, authorize("posts", "update"), postController.update);
-router.delete("/post/:id", authenticate, validate(), loadPost, authorize("posts", "remove"), postController.remove);
+router.post(
+	"/user/register", 
+	validate({ body: userValidation.register }), 
+	userController.register
+);
 
-router.post("/comment/:post_id", authenticate, validate(commentValidation.create), loadPost, authorize("comments", "create"), commentController.create);
-router.get("/comment/:id", authenticate, validate(), loadComment, authorize("comments", "view"), commentController.retrieve);
-router.put("/comment/:id", authenticate, validate(commentValidation.update), loadComment, authorize("comments", "update"), commentController.update);
-router.delete("/comment/:id", authenticate, validate(), loadComment, authorize("comments", "remove"), commentController.remove);
+router.post(
+	"/auth/logout", 
+	authenticate, 
+	userController.logout
+);
 
-router.post("/report/:post_id", authenticate, validate(reportValidation.create), loadPost, authorize("reports", "create"), reportController.create);
-router.get("/report/:id", authenticate, validate(), loadReport, authorize("reports", "view"), reportController.retrieve);
-router.put("/report/:id", authenticate, validate(reportValidation.update), loadReport, authorize("reports", "update"), reportController.update);
-router.delete("/report/:id", authenticate, validate(), loadReport, authorize("reports", "remove"), reportController.remove);
+router.get(
+	"/user/profile", 
+	authenticate, 
+	userController.profile
+);
 
-router.post("/reaction/:post_id", authenticate, validate(reactionValidation.create), loadPost, authorize("reactions", "create"), reactionController.create);
-router.get("/reaction/:id", authenticate, validate(), loadReaction, authorize("reactions", "view"), reactionController.retrieve);
-router.put("/reaction/:id", authenticate, validate(reactionValidation.update), loadReaction, authorize("reactions", "update"), reactionController.update);
-router.delete("/reaction/:id", authenticate, validate(), loadReaction, authorize("reactions", "remove"), reactionController.remove);
+router.get(	
+	"/my-posts", 
+	authenticate, 
+	validate({ query: queryValidation.post }),
+	userController.posts
+);
+
+router.put(
+	"/user/profile", 
+	authenticate, 
+	validate({ body: userValidation.update }), 
+	userController.update_profile
+);
+
+router.post(
+	"/post", 
+	authenticate, 
+	validate({ body: postValidation.create }), 
+	authorize("posts", "create"), 
+	postController.create
+);
+
+router.get(
+	"/post/:id", 
+	authenticate, 
+	validate({ params: parameterValidation.id }), 
+	loadPost, 
+	authorize("posts", "view"), 
+	postController.retrieve
+);
+
+router.put(
+	"/post/:id", 
+	authenticate, 
+	validate({ body: postValidation.update, params: parameterValidation.id }), 
+	loadPost, 
+	authorize("posts", "update"), 
+	postController.update
+);
+
+router.delete(
+	"/post/:id", 
+	authenticate, 
+	validate({ params: parameterValidation.id }), 
+	loadPost, 
+	authorize("posts", "remove"), 
+	postController.remove
+);
+
+router.post(
+	"/comment/:post_id", 
+	authenticate, 
+	validate({ body: commentValidation.create, 
+	params: parameterValidation.id }), 
+	loadPost, 
+	authorize("comments", "create"), 
+	commentController.create
+);
+
+router.get(
+	"/comment/:id", 
+	authenticate, 
+	validate({ params: parameterValidation.id }), 
+	loadComment, 
+	authorize("comments", "view"), 
+	commentController.retrieve
+);
+router.put(
+	"/comment/:id", 
+	authenticate, 
+	validate({ body: commentValidation.update, params: parameterValidation.id }), 
+	loadComment, 
+	authorize("comments", "update"), 
+	commentController.update
+);
+router.delete(
+	"/comment/:id", 
+	authenticate, 
+	validate({ params: parameterValidation.id }), 
+	loadComment, 
+	authorize("comments", "remove"), 
+	commentController.remove
+);
+
+router.post(
+	"/report/:post_id", 
+	authenticate, 
+	validate({ body: reportValidation.create, params: parameterValidation.id }), 
+	loadPost, 
+	authorize("reports", "create"), 
+	reportController.create
+);
+
+router.get(
+	"/report/:id", 
+	authenticate, 
+	validate({ params: parameterValidation.id }),
+	loadReport, 
+	authorize("reports", "view"), 
+	reportController.retrieve
+);
+
+router.put(
+	"/report/:id", 
+	authenticate, 
+	validate({ body: reportValidation.update, , params: parameterValidation.id }), 
+	loadReport, 
+	authorize("reports", "update"), 
+	reportController.update
+);
+
+router.delete(
+	"/report/:id", 
+	authenticate, 
+	validate({ params: parameterValidation.id }), 
+	loadReport, 
+	authorize("reports", "remove"), 
+	reportController.remove
+);
+
+router.post(
+	"/reaction/:post_id", 
+	authenticate, 
+	validate({ body: reactionValidation.create, params: parameterValidation.id }), 
+	loadPost, 
+	authorize("reactions", "create"), 
+	reactionController.create
+);
+
+router.get(
+	"/reaction/:id", 
+	authenticate, 
+	validate({ params: parameterValidation.id }), 
+	loadReaction, 
+	authorize("reactions", "view"), 
+	reactionController.retrieve
+);
+
+router.put(
+	"/reaction/:id", 
+	authenticate, 
+	validate({ body: reactionValidation.update, params: parameterValidation.id }), 
+	loadReaction, 
+	authorize("reactions", "update"), 
+	reactionController.update
+);
+
+router.delete(
+	"/reaction/:id", 
+	authenticate, 
+	validate({ params: parameterValidation.id }), 
+	loadReaction, 
+	authorize("reactions", "remove"), 
+	reactionController.remove
+);
 
 
 
