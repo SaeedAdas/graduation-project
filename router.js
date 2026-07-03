@@ -83,6 +83,14 @@ router.post(
 	postController.create
 );
 
+// Current authorization model checks for a single resource. For multiple resources, authorization should be done at database-level by querying efficiently
+router.get(
+	"/posts", 
+	authenticate, 
+	validate({ query: queryValidation.post }), 
+	postController.get_posts
+);
+
 router.get(
 	"/post/:id", 
 	authenticate, 
