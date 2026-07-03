@@ -1,5 +1,4 @@
 const messages = require("../helper/messages");
-const idPattern = /^\d{1,9}$/
 
 const parseSchema = (res, schema, data) => {
 	if (schema == null) {
@@ -14,7 +13,7 @@ const parseSchema = (res, schema, data) => {
 	if (!result.success) {
 		return {
 			success: false,
-			errors: result.error.issues
+			errors: { issues: result.error.issues.message.map((issue) => issue.message) }
 		}
 	}
 
@@ -26,18 +25,6 @@ const parseSchema = (res, schema, data) => {
 
 const validate = (schemas) => {
 	return (req, res, next) => {
-		/*
-		const parameterKey = Object.keys(req.params)[0];
-		if (parameterKey) {
-			const id = req.params[parameterKey];
-
-			if (id && !idPattern.test(id)) {
-				return messages.badRequest(res, "Invalid parameter");
-			}
-
-			req.params[parameterKey] = Number(id);
-		}
-		*/
 
 		const validationTargets = [
 			"body": schemas.bodySchema,
@@ -52,6 +39,7 @@ const validate = (schemas) => {
 				return messages.badRequest(res, result.errors);
 			}
 
+			req[key] = result.data;
 		}
 
 		next();
