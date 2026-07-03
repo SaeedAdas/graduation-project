@@ -13,7 +13,8 @@ const parseSchema = (res, schema, data) => {
 	if (!result.success) {
 		return {
 			success: false,
-			errors: { issues: result.error.issues.message.map((issue) => issue.message) }
+			console.log(result.error.issues);
+			errors: { issues: result.error.issues.map((issue) => issue.message) }
 		}
 	}
 
