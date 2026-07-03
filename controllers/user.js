@@ -349,27 +349,44 @@ const posts = async (req, res) => {
 
 		const id = req.user.id;
 
-		let { page, limit } = req.query;
+		let { page, limit, search, searchIn } = req.query;
 
-		page = Number(page);
-		limit = Number(limit);
+		const where = {
+			userId: id
+		};
 
-		// TODO Implement a proper input validation rules for queries
-		if (
-			  !Number.isInteger(pageNum) ||
-			  !Number.isInteger(limitNum) ||
-			  pageNum < 1 ||
-			  limitNum < 1
-		) {
-			  return messages.badRequest(res, "Page and limit should be positive integers");
+		if (search) {
+			if (searchIn != undefined) {
+				where[searchIn] = {
+					contains: search,
+					mode: "insensitive"
+				}
+			} else {
+				where.OR = [
+					{
+						title: {
+							contains: search,
+							mode: "insensitive"
+						}
+					},
+					{
+						description: {
+							contains: search,
+							mode: "insensitive"
+						}
+					},
+					{
+						category: {
+							contains: search,
+							mode: "insensitive"
+						}
+					}
+				]
+			}
 		}
 
-		const skip = (page - 1) * limit;
-	
-		const posts = await prisma.post.findMany({
-			where: {userId: id},
-			skip,
-			take: limit,
+		const queryOptions = {
+			where,
 			orderBy: {"createdAt": "desc"},
 			select: {
 				title: true,
@@ -383,12 +400,20 @@ const posts = async (req, res) => {
 					}
 				}
 			}
-		});
+		}
+
+		if (page !== undefined && limit !== undefined) {
+			queryOptions.skip = (page - 1) * limit;
+			queryOptions.take = limit;
+		}
+
+	
+		const posts = await prisma.post.findMany(queryOptions);
 
 		return res.json(posts);
 
 	} catch (error) {
-		console.error("Updating Profile error:", error);
+		console.error("Retreiving my-posts error: ", error);
 
 		return messages.serverError(res);
 	}
