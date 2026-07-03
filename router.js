@@ -121,8 +121,7 @@ router.delete(
 router.post(
 	"/comment/:post_id", 
 	authenticate, 
-	validate({ body: commentValidation.create, 
-	params: parameterValidation.id }), 
+	validate({ body: commentValidation.create, params: parameterValidation.post_id }), 
 	loadPost, 
 	authorize("comments", "create"), 
 	commentController.create
@@ -139,7 +138,7 @@ router.get(
 router.put(
 	"/comment/:id", 
 	authenticate, 
-	validate({ body: commentValidation.update, params: parameterValidation.id }), 
+	validate({ body: commentValidation.update, params: parameterValidation.post_id }), 
 	loadComment, 
 	authorize("comments", "update"), 
 	commentController.update
@@ -156,7 +155,7 @@ router.delete(
 router.post(
 	"/report/:post_id", 
 	authenticate, 
-	validate({ body: reportValidation.create, params: parameterValidation.id }), 
+	validate({ body: reportValidation.create, params: parameterValidation.post_id }), 
 	loadPost, 
 	authorize("reports", "create"), 
 	reportController.create
@@ -192,7 +191,7 @@ router.delete(
 router.post(
 	"/reaction/:post_id", 
 	authenticate, 
-	validate({ body: reactionValidation.create, params: parameterValidation.id }), 
+	validate({ body: reactionValidation.create, params: parameterValidation.post_id }), 
 	loadPost, 
 	authorize("reactions", "create"), 
 	reactionController.create

@@ -7,7 +7,15 @@ const id = z.object({
 	    .int("id must be an integer")
 });
 
+const post_id = z.object({
+	post_id: z
+	    .coerce
+  	    .number("id must be a number")
+	    .int("id must be an integer")
+});
+
 
 module.exports = {
-	id
+	id,
+	post_id
 };
