@@ -1,8 +1,9 @@
 const { z } = require("zod");
 
+// preprocess lets you modify input before going to the parser
 const reactionSchema = z.preprocess(
-	(value) => value === "" ? undefined : value,
-	z.coerce
+	(value) => value === "" ? undefined : value, // we modify the empty string to be undefined because Number("") is 0 in javascript
+	z.coerce // coerce.number runs Number(input)
 	.number({
 		error: (issue) =>
 		issue.input === undefined
