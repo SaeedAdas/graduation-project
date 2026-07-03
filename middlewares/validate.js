@@ -26,13 +26,13 @@ const parseSchema = (res, schema, data) => {
 const validate = (schemas) => {
 	return (req, res, next) => {
 
-		const validationTargets = [
-			"body": schemas.bodySchema,
-			"query": schemas.querySchema,
-			"params": schemas.paramsSchema
-		]
+		const validationTargets = {
+			body: schemas.bodySchema,
+			query: schemas.querySchema,
+			params: schemas.paramsSchema
+		}
 
-		for (const [key, schema] of validationTargets) {
+		for (const [key, schema] of Object.entries(validationTargets)) {
 			const result = parseSchema(res, schema, req[key]);
 
 			if (!result.success) {
