@@ -11,9 +11,6 @@ const parseSchema = (res, schema, data) => {
 	const result = schema.safeParse(data);
 
 	if (!result.success) {
-		console.log("issues: ", result.error.issues);
-		console.log("error: ", result.error);
-		console.log("message: ", result.error.issues.message);
 		return {
 			success: false,
 			errors: { issues: result.error.issues.map((issue) => issue.message) }
