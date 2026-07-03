@@ -27,9 +27,9 @@ const validate = (schemas) => {
 	return (req, res, next) => {
 
 		const validationTargets = {
-			body: schemas.bodySchema,
-			query: schemas.querySchema,
-			params: schemas.paramsSchema
+			body: schemas.body,
+			query: schemas.query,
+			params: schemas.params
 		}
 
 		for (const [key, schema] of Object.entries(validationTargets)) {
