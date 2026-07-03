@@ -127,6 +127,81 @@ const retrieve = async (req, res) => {
 	res.json(post);
 };
 
+const get_posts = async (req, res) => {
+	try {
+
+
+		let { page, limit, search, searchIn } = req.query;
+		
+		// where clause should be retrieved from an authorization query scope engine
+		const where = {
+
+		};
+
+		if (search) {
+			if (searchIn != undefined) {
+				where[searchIn] = {
+					contains: search,
+					mode: "insensitive"
+				}
+			} else {
+				where.OR = [
+					{
+						title: {
+							contains: search,
+							mode: "insensitive"
+						}
+					},
+					{
+						description: {
+							contains: search,
+							mode: "insensitive"
+						}
+					},
+					{
+						category: {
+							contains: search,
+							mode: "insensitive"
+						}
+					}
+				]
+			}
+		}
+
+		const queryOptions = {
+			where,
+			orderBy: {"createdAt": "desc"},
+			select: {
+				title: true,
+				category: true,
+				description: true,
+				createdAt: true,
+				_count: {
+					select: {
+						comments: true,
+						reactions: true
+					}
+				}
+			}
+		}
+
+		if (page !== undefined && limit !== undefined) {
+			queryOptions.skip = (page - 1) * limit;
+			queryOptions.take = limit;
+		}
+
+	
+		const posts = await prisma.post.findMany(queryOptions);
+
+		return res.json(posts);
+
+	} catch (error) {
+		console.error("Retreiving posts error: ", error);
+
+		return messages.serverError(res);
+	}
+};
+
 /**
  * @openapi
  * /post/{id}:
@@ -269,5 +344,6 @@ module.exports = {
 	create,
 	retrieve,
 	update,
-	remove
+	remove,
+	get_posts
 };
