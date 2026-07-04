@@ -349,11 +349,15 @@ const posts = async (req, res) => {
 
 		const id = req.user.id;
 
-		let { page, limit, search, searchIn } = req.query;
+		let { page, limit, search, searchIn, category } = req.query;
 
 		const where = {
 			userId: id
 		};
+
+		if (category !== undefined) {
+			where.category_id = category;
+		}
 
 		if (search) {
 			if (searchIn != undefined) {
@@ -371,12 +375,6 @@ const posts = async (req, res) => {
 					},
 					{
 						description: {
-							contains: search,
-							mode: "insensitive"
-						}
-					},
-					{
-						category: {
 							contains: search,
 							mode: "insensitive"
 						}

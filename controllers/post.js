@@ -131,21 +131,28 @@ const get_posts = async (req, res) => {
 	try {
 
 
-		let { page, limit, search, searchIn } = req.query;
+		let { page, limit, search, searchIn, category } = req.query;
 		
 		// where clause should be retrieved from an authorization query scope engine
-		const where = {
+		const authorizationWhere = {};
+
+		const criteria = {
 
 		};
 
+		// Non-existing categories would return [] regardless of page, limit, search
+		if (category !== undefined) {
+			criteria.category_id = category	
+		}
+
 		if (search) {
 			if (searchIn != undefined) {
-				where[searchIn] = {
+				criteria[searchIn] = {
 					contains: search,
 					mode: "insensitive"
 				}
 			} else {
-				where.OR = [
+				criteria.OR = [
 					{
 						title: {
 							contains: search,
@@ -157,19 +164,18 @@ const get_posts = async (req, res) => {
 							contains: search,
 							mode: "insensitive"
 						}
-					},
-					{
-						category: {
-							contains: search,
-							mode: "insensitive"
-						}
 					}
 				]
 			}
 		}
 
 		const queryOptions = {
-			where,
+			where: {
+				AND: [
+					authorizationWhere,
+					criteria
+				]
+			},
 			orderBy: {"createdAt": "desc"},
 			select: {
 				title: true,
