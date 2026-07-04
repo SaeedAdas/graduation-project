@@ -25,7 +25,7 @@ exports.badRequest = (res, payload = "Bad request") => {
 	}
 	else { 
 		res.status(400).json({
-			message: payload 
+			issues: [payload]
 		});
 	}
 };
