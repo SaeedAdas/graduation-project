@@ -37,12 +37,11 @@ model User {
 model Post {
 	id          Int       @id @default(autoincrement())
 	userId      Int       @map("user_id")
-	category    String   @db.VarChar(20)
 	title       String    @db.VarChar(100)
 	description String?
 	createdAt   DateTime? @default(now()) @map("created_at") @db.Timestamp(0)
 
-	user      User       @relation(fields: [userId], references: [id])
+	user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 	comments  Comment[]
 	reports   Report[]
 	reactions Reaction[]
@@ -90,4 +89,14 @@ model Reaction {
 
 	@@unique([userId, postId])
 	@@map("reactions")
+}
+
+model Category {
+	id	Int	@id @default(autoincrement())
+	name	String
+	createdAt DateTime? @default(now()) @map("created_at") @db.Timestamp(0)
+	
+	posts     Post[]
+
+	@@map("categories")
 }
