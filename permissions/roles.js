@@ -24,6 +24,12 @@ const ROLES = {
 			update: true,
 			remove: true
 		},
+		categories: {
+			view: true,
+			create: true,
+			update: true,
+			remove: true
+		},
 		users: {
 			view: true,
 			create: true,
@@ -58,6 +64,12 @@ const ROLES = {
 			create: true,
 			update: (user, report) => user.id == report.userId,
 			remove: (user, report) => user.id == report.userId
+		},
+		categories: {
+			view: true,
+			create: false,
+			update: false,
+			remove: false
 		},
 		users: {
 			view: (user, target_id) => user.id == target_id,
