@@ -37,11 +37,13 @@ model User {
 model Post {
 	id          Int       @id @default(autoincrement())
 	userId      Int       @map("user_id")
+	categoryId  Int       @default(1) @map("category_id")
 	title       String    @db.VarChar(100)
 	description String?
 	createdAt   DateTime? @default(now()) @map("created_at") @db.Timestamp(0)
 
 	user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+	category  Category    @relation(fields: [categoryId], references: [id], onDelete: Restrict)
 	comments  Comment[]
 	reports   Report[]
 	reactions Reaction[]
@@ -96,6 +98,8 @@ model Category {
 	name	String
 	createdAt DateTime? @default(now()) @map("created_at") @db.Timestamp(0)
 	
+	posts Post[]
+
 	@@map("categories")
 }
 
