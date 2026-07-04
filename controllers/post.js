@@ -179,7 +179,11 @@ const get_posts = async (req, res) => {
 			orderBy: {"createdAt": "desc"},
 			select: {
 				title: true,
-				category: true,
+				category: {
+					select: {
+						name: true
+					}
+				},
 				description: true,
 				createdAt: true,
 				_count: {
@@ -199,7 +203,12 @@ const get_posts = async (req, res) => {
 	
 		const posts = await prisma.post.findMany(queryOptions);
 
-		return res.json(posts);
+		const formattedPosts = posts.map((post) => ({
+			...post,
+			category: post.category.name
+		}))
+
+		return res.json(formattedPosts);
 
 	} catch (error) {
 		console.error("Retreiving posts error: ", error);

@@ -408,7 +408,12 @@ const posts = async (req, res) => {
 	
 		const posts = await prisma.post.findMany(queryOptions);
 
-		return res.json(posts);
+		const formattedPosts = posts.map((post) => ({
+			...post,
+			category: post.category.name
+		}))
+
+		return res.json(formattedPosts);
 
 	} catch (error) {
 		console.error("Retreiving my-posts error: ", error);
