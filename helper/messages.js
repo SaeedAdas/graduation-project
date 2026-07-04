@@ -19,10 +19,15 @@ exports.deletedSuccessfully = (res) => {
 
 // Errors with status 400+
 
-exports.badRequest = (res, message = "Bad request") => {
-	res.status(400).json({
-		message: message 
-	});
+exports.badRequest = (res, payload = "Bad request") => {
+	if (typeof payload === "object") {
+		res.status(400).json(payload);
+	}
+	else { 
+		res.status(400).json({
+			message: payload 
+		});
+	}
 };
 
 exports.Unauthenticated = (res, message = "Unauthenticated") => {
