@@ -19,7 +19,8 @@ const {
 	loadPost,
 	loadComment,
 	loadReport,
-	loadReaction
+	loadReaction,
+	loadCategory
 } = require("./middlewares/loadResources");
 
 
@@ -29,6 +30,7 @@ const postController = require("./controllers/post")
 const commentController = require("./controllers/comment")
 const reportController = require("./controllers/report")
 const reactionController = require("./controllers/reaction")
+const categoryController = require("./controllers/category")
 
 
 // Swagger documentation
@@ -224,6 +226,50 @@ router.delete(
 	reactionController.remove
 );
 
+router.post(
+	"/category", 
+	authenticate, 
+	validate({ body: categoryValidation.create }), 
+	authorize("categories", "create"), 
+	categoryController.create
+);
+
+/*
+router.get(
+	"/category/:id", 
+	authenticate, 
+	validate({ params: parameterValidation.id }), 
+	loadCategory,
+	authorize("categories", "view"), 
+	categoryController.retrieve
+);
+*/
+
+router.get(
+	"/categories", 
+	authenticate, 
+	validate({ query: queryValidation.category }), 
+	categoryController.get_all
+);
+
+
+router.put(
+	"/category/:id", 
+	authenticate, 
+	validate({ body: categoryValidation.update, params: parameterValidation.id }), 
+	loadCategory,
+	authorize("categories", "update"), 
+	categoryController.update
+);
+
+router.delete(
+	"/category/:id", 
+	authenticate, 
+	validate({ params: parameterValidation.id }), 
+	loadCategory,
+	authorize("categories", "remove"), 
+	categoryController.remove
+);
 
 
 module.exports = router;
