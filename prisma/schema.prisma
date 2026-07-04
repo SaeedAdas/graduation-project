@@ -104,7 +104,7 @@ model Reaction {
 model Category {
 	id	Int	@id @default(autoincrement())
 	name	String
-	description	String
+	description	String @default("")
 	createdAt DateTime? @default(now()) @map("created_at") @db.Timestamp(0)
 	
 	posts Post[]
