@@ -10,6 +10,7 @@ const postValidation = require("./validations/post");
 const commentValidation = require("./validations/comment");
 const reportValidation = require("./validations/report");
 const reactionValidation = require("./validations/reaction");
+const categoryValidation = require("./validations/category");
 const parameterValidation = require("./validations/parameter");
 const queryValidation = require("./validations/query");
 const { authenticate } = require("./middlewares/authenticate");
