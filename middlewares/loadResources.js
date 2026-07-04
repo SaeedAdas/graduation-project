@@ -82,9 +82,30 @@ const loadReaction = async (req, res, next) => {
 	}
 }
 
+const loadCategory = async (req, res, next) => {
+	try {
+		const id = req.params.id;
+		
+		const category = await prisma.post.findUnique({where:{ id }});
+
+		if (!category) {
+			return messages.notFound(res, "Category not found");
+		}
+	
+		req.data = category;
+
+		next();
+	} catch (error) {
+		console.error("Error loading category: ", error);
+
+		return messages.serverError(res);
+	}
+}
+
 module.exports = {
 	loadPost,
 	loadComment,
 	loadReport,
-	loadReaction
+	loadReaction,
+	loadCategory
 };
