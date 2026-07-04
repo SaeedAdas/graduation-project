@@ -3,9 +3,10 @@ const { z } = require("zod");
 // without .strict(), extra fields are stripped down, with .strict() validation error is returned
 const postSchema = z.object({
 	category: z
-		.string("Category must be a string")
-		.min(3, "Minimum length of category is 3")
-		.max(20, "Maxmimum length of category is 20"),
+		.coerce
+		.number("category must be a number")
+		.int("category must be an integer")
+		.min(1, "Category must be at least 1"),
 	title: z
 		.string("Title must be a string")
 		.min(5, "Minimum length of title is 5")
