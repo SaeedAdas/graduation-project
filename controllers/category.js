@@ -82,7 +82,7 @@ const get_all = async (req, res) => {
 			},
 			orderBy: {"createdAt": "desc"},
 			select: {
-				id: true
+				id: true,
 				name: true,
 				description: true,
 				createdAt: true,
