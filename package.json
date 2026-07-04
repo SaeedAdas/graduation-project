@@ -9,7 +9,7 @@
 		"postinstall": "prisma generate",
 		"db:push": "prisma db push",
 		"db:push:force": "prisma db push --accept-data-loss",
-		"db:deploy": "prisma migrate deploy",
+		"db:seed": "node prisma/seed.js",
 		"prisma:studio": "prisma studio"
 	},
 	"dependencies": {
@@ -23,12 +23,12 @@
 		"swagger-ui-express": "^5.0.1",
 		"express-session": "^1.18.1",
 		"connect-pg-simple": "^10.0.0",
+		"prisma": "6.19.0",
 		"csrf-csrf": "^3.1.0",
 		"pg": "^8.13.1",
 		"bcryptjs": "^2.4.3"
 	},
 	"devDependencies": {
-		"prisma": "6.19.0"
 	},
 	"engines": {
 		"node": ">=18"
