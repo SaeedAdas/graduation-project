@@ -11,7 +11,6 @@ const messages = require("../helper/messages");
  *       - Posts
  *     security:
  *       - cookieAuth: []
- *         csrfToken: []
  *     requestBody:
  *       required: true
  *       content:
@@ -61,7 +60,7 @@ const create = async (req, res) => {
 
 		const post = await prisma.post.create({
 			data: {
-				category,
+				category_id: category,
 				title,
 				userId: user_id,
 				description: description ?? null
@@ -71,6 +70,12 @@ const create = async (req, res) => {
 		return messages.createdSuccessfully(res, "Post Created Successfully");
 
 	} catch (error) {
+		if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      			if (error.code === "P2003") {
+        			return messages.badRequest(res, "Invalid category");
+      			}
+		}
+
 		console.error("Creating post error: ", error);
 
 		return messages.serverError(res);
@@ -285,7 +290,7 @@ const update = async (req, res) => {
 		await prisma.post.update({
 			where: {id},
 			data: {
-				category,
+				category_id: category,
 				title,
 				description
 			}
@@ -294,6 +299,12 @@ const update = async (req, res) => {
 		return messages.success(res, "Post updated successfully");
 		
 	} catch (error) {
+		if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      			if (error.code === "P2003") {
+        			return messages.badRequest(res, "Invalid category");
+      			}
+    		}
+
 		console.error("updating post error: ", error);
 
 		return messages.serverError(res);
