@@ -100,7 +100,7 @@ model Category {
 }
 
 model Session {
-        sid    String   @id(map: "session_pkey") @db.VarChar(255)
+        sid    String   @id(map: "session_pkey") @db.VarChar
         sess   Json     @db.Json
         expire DateTime @db.Timestamp(6)
 
