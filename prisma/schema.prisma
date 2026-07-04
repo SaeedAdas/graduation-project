@@ -9,13 +9,20 @@ enum UserRole {
         @@map("user_role")
 }
 
+enum UserStatus {
+	Active
+	Inactive
+
+        @@map("user_status")
+}
+
 datasource db {
 	provider = "postgresql"
 	url = env("DATABASE_URL")
 }
 
 model User {
-	id        Int       @id @default(autoincrement())
+	id        Int	@id @default(autoincrement())
 	email     String    @unique @db.VarChar(50)
 	phone     String?   @unique @db.VarChar(20)
 	password  String    @db.VarChar(256)
@@ -24,6 +31,7 @@ model User {
 	bio       String?
 	birthdate DateTime? @db.Date
 	city      String?   @db.VarChar(50)
+	status    UserStatus @default(Active)
 	createdAt DateTime? @default(now()) @map("created_at") @db.Timestamp(0)
 
 	posts     Post[]
@@ -96,6 +104,7 @@ model Reaction {
 model Category {
 	id	Int	@id @default(autoincrement())
 	name	String
+	description	String
 	createdAt DateTime? @default(now()) @map("created_at") @db.Timestamp(0)
 	
 	posts Post[]

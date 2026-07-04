@@ -1,4 +1,5 @@
 const bcrypt = require("bcryptjs");
+const { UserStatus } = require("@prisma/client");
 const prisma = require("../config/connection");
 const messages = require("../helper/messages");
 const { rotateCsrfToken } = require("../middlewares/csrf");
@@ -67,7 +68,8 @@ const login = async (req, res) => {
 				full_name: true,
 				email: true,
 				password: true,
-				role: true
+				role: true,
+				status: true
 			}
 		});
 
@@ -79,6 +81,10 @@ const login = async (req, res) => {
 
 		if (!passwordMatches) {
 			return messages.badRequest(res, "Invalid email or password");
+		}
+
+		if (user.status == UserStatus.Inactive) {
+			return messages.Unauthorized(res, "Your account is disabled");
 		}
 
 		// Regenerating session instead of updating existing one
