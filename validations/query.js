@@ -1,6 +1,6 @@
 const { z } = require("zod");
 
-const postFieldsEnum = ["description", "title", "category"];
+const postFieldsEnum = ["description", "title"];
 
 const post = z
 	.object({
@@ -21,6 +21,12 @@ const post = z
 			.optional(),
 		searchIn: z
 			.enum(postFieldsEnum)
+			.optional(),
+		category: z
+			.coerce
+			.number("Category must be a number")
+			.int("Category must be an integer")
+			.min(1, "Category should be at least 1")
 			.optional(),
 	})
 	.refine(
