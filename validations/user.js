@@ -40,6 +40,26 @@ const passwordSchema = z
     		"Password cannot contain 4 or more increasing numbers in sequence"
   	)
 
+const birthdateSchema = z
+	.iso.date({
+                error: "Birthdate must be in YYYY-MM-DD format"
+        }).transform((value) => {
+		const [year, month, day] = value.split("-").map(Number); // Ex. [2000, 1, 15]
+        	const date = new Date(Date.UTC(year, month - 1, day)); // months are 0 based in Javascript date, January is 0.
+
+		// this check is needed to prevent Date(2000, 1, 31) which is Feb 31st auto-correct to Mar 2nd
+        	if (date.toISOString().slice(0, 10) !== value) {
+                	ctx.addIssue({
+                        	code: "custom",
+                        	message: "Invalid birthdate"
+                	});
+
+                	return z.NEVER;
+        	}
+
+        	return date;
+        })
+
 const profile = {
 	full_name: z.string("Full name must be a string"),
 	phone: z.string("Phone must be a string").regex(/^(?:\+97[02]5[69]\d{7}|05[69]\d{7})$/, {
@@ -49,9 +69,7 @@ const profile = {
 	bio: z
 	     .string("Bio must be a string")
 	     .max(1500, "Bio must be 1500 characters or less"),
-	birthdate: z.iso.date({
-    		error: "Birthdate must be in YYYY-MM-DD format"
-  	})
+	birthdate: birthdateSchema
 }
 
 const register = z.object({
