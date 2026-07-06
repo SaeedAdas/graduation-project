@@ -239,7 +239,7 @@ const update = async (req, res) => {
  *           example: 1
  *         description: Reaction ID.
  *     responses:
- *       200:
+ *       204:
  *         description: Reaction deleted successfully
  *         content:
  *           application/json:

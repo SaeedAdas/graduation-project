@@ -947,7 +947,7 @@ const get_all = async (req, res) => {
  *           example: 2
  *         description: User ID
  *     responses:
- *       200:
+ *       204:
  *         description: User deleted successfully
  *         content:
  *           application/json:

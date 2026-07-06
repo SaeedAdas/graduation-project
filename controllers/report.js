@@ -198,6 +198,7 @@ const retrieve = async (req, res) => {
  *       500:
  *         description: Internal server error
  */
+
 const update = async (req, res) => {
 	try {
 		const id = req.params.id;
@@ -239,7 +240,7 @@ const update = async (req, res) => {
  *           example: 1
  *         description: Report ID.
  *     responses:
- *       200:
+ *       204:
  *         description: Report deleted successfully
  *         content:
  *           application/json:
@@ -258,6 +259,7 @@ const update = async (req, res) => {
  *       500:
  *         description: Internal server error
  */
+
 const remove = async (req, res) => {
 	try {
 		const id = req.params.id;

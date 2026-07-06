@@ -420,7 +420,7 @@ const update = async (req, res) => {
  *           example: 1
  *         description: Post ID.
  *     responses:
- *       200:
+ *       204:
  *         description: Post deleted successfully
  *         content:
  *           application/json:

@@ -314,7 +314,7 @@ const update = async (req, res) => {
  *           example: 1
  *         description: Category ID.
  *     responses:
- *       200:
+ *       204:
  *         description: Category deleted successfully
  *         content:
  *           application/json:
