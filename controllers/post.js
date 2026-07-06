@@ -62,7 +62,7 @@ const create = async (req, res) => {
 
 		await prisma.post.create({
 			data: {
-				category_id: category,
+				categoryId: category,
 				title,
 				userId: user_id,
 				description: description ?? null
@@ -243,7 +243,7 @@ const get_posts = async (req, res) => {
 
 		// Non-existing categories would return [] regardless of page, limit, search
 		if (category !== undefined) {
-			criteria.category_id = category;
+			criteria.categoryId = category;
 		}
 
 		if (search) {
@@ -381,7 +381,7 @@ const update = async (req, res) => {
 		await prisma.post.update({
 			where: { id },
 			data: {
-				category_id: category,
+				categoryId: category,
 				title,
 				description
 			}

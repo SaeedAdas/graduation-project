@@ -473,7 +473,7 @@ const posts = async (req, res) => {
 		};
 
 		if (category !== undefined) {
-			where.category_id = category;
+			where.categoryId = category;
 		}
 
 		if (search) {
