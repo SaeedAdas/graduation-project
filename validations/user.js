@@ -62,7 +62,7 @@ const register = z.object({
 
 const login = z.object({
 	email: z.email("Must follow email format username@domain.tld"),
-	password: passwordSchema,
+	password: z.string("Password must be a string"),
 	rememberMe: z.boolean("rememberMe must be a boolean")
 });
 
