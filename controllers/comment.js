@@ -18,7 +18,8 @@ const messages = require("../helper/messages");
  *         required: true
  *         schema:
  *           type: integer
- *         description: Post ID that the comment belongs to
+ *           example: 1
+ *         description: Post ID that the comment belongs to.
  *     requestBody:
  *       required: true
  *       content:
@@ -34,6 +35,8 @@ const messages = require("../helper/messages");
  *                 example: This post was really helpful.
  *               rating:
  *                 type: integer
+ *                 minimum: 1
+ *                 maximum: 5
  *                 example: 5
  *     responses:
  *       201:
@@ -57,24 +60,22 @@ const messages = require("../helper/messages");
  *       500:
  *         description: Internal server error
  */
-
 const create = async (req, res) => {
 	try {
 		const post_id = req.params.post_id;
 		const user_id = req.session.user_id;
-		const { content, rating } = req.body;	
+		const { content, rating } = req.body;
 
-		const comment = await prisma.comment.create({
+		await prisma.comment.create({
 			data: {
 				postId: post_id,
 				userId: user_id,
-				content, 
-				rating 
+				content,
+				rating
 			}
 		});
 
 		return messages.createdSuccessfully(res, "Comment Saved Successfully");
-
 	} catch (error) {
 		console.error("Saving comment error: ", error);
 
@@ -98,7 +99,8 @@ const create = async (req, res) => {
  *         required: true
  *         schema:
  *           type: integer
- *         description: Comment ID
+ *           example: 1
+ *         description: Comment ID.
  *     responses:
  *       200:
  *         description: Comment loaded successfully
@@ -131,13 +133,11 @@ const create = async (req, res) => {
  *       500:
  *         description: Internal server error
  */
-
 const retrieve = async (req, res) => {
 	try {
 		const comment = req.data;
 
 		res.json(comment);
-
 	} catch (error) {
 		console.error("Retrieving comment error: ", error);
 
@@ -162,7 +162,8 @@ const retrieve = async (req, res) => {
  *         required: true
  *         schema:
  *           type: integer
- *         description: Comment ID
+ *           example: 1
+ *         description: Comment ID.
  *     requestBody:
  *       required: true
  *       content:
@@ -175,6 +176,8 @@ const retrieve = async (req, res) => {
  *                 example: Updated comment content.
  *               rating:
  *                 type: integer
+ *                 minimum: 1
+ *                 maximum: 5
  *                 example: 4
  *     responses:
  *       200:
@@ -201,7 +204,7 @@ const retrieve = async (req, res) => {
 const update = async (req, res) => {
 	try {
 		const id = req.params.id;
-		
+
 		const { content, rating } = req.body;
 
 		await prisma.comment.update({
@@ -213,7 +216,6 @@ const update = async (req, res) => {
 		});
 
 		return messages.success(res, "Comment updated successfully");
-		
 	} catch (error) {
 		console.error("Updating comment error: ", error);
 
@@ -238,7 +240,8 @@ const update = async (req, res) => {
  *         required: true
  *         schema:
  *           type: integer
- *         description: Comment ID
+ *           example: 1
+ *         description: Comment ID.
  *     responses:
  *       200:
  *         description: Comment deleted successfully
@@ -263,10 +266,9 @@ const remove = async (req, res) => {
 	try {
 		const id = req.params.id;
 
-		await prisma.comment.delete({where: {id}});
+		await prisma.comment.delete({ where: { id } });
 
 		return messages.deletedSuccessfully(res, "Comment deleted Successfully");
-
 	} catch (error) {
 		console.error("Deleting comment error: ", error);
 
@@ -280,3 +282,4 @@ module.exports = {
 	update,
 	remove
 };
+

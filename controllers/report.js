@@ -18,7 +18,8 @@ const messages = require("../helper/messages");
  *         required: true
  *         schema:
  *           type: integer
- *         description: Post ID that the report belongs to
+ *           example: 1
+ *         description: Post ID that the report belongs to.
  *     requestBody:
  *       required: true
  *       content:
@@ -55,14 +56,15 @@ const messages = require("../helper/messages");
  */
 const create = async (req, res) => {
 	try {
-		const post_id = req.params.post_id;	
+		const post_id = req.params.post_id;
 		const user_id = req.session.user_id;
-		const { reason } = req.body;	
+		const { reason } = req.body;
 
-		const report = await prisma.report.upsert({
+		await prisma.report.upsert({
 			where: {
-				userId_postId: { // compound key
-					postId: post_id, 
+				userId_postId: {
+					// compound key
+					postId: post_id,
 					userId: user_id
 				}
 			},
@@ -77,7 +79,6 @@ const create = async (req, res) => {
 		});
 
 		return messages.createdSuccessfully(res, "Report Saved Successfully");
-
 	} catch (error) {
 		console.error("Saving report error: ", error);
 
@@ -101,7 +102,8 @@ const create = async (req, res) => {
  *         required: true
  *         schema:
  *           type: integer
- *         description: Report ID
+ *           example: 1
+ *         description: Report ID.
  *     responses:
  *       200:
  *         description: Report loaded successfully
@@ -136,7 +138,6 @@ const retrieve = async (req, res) => {
 		const report = req.data;
 
 		res.json(report);
-
 	} catch (error) {
 		console.error("Retrieving report error: ", error);
 
@@ -161,7 +162,8 @@ const retrieve = async (req, res) => {
  *         required: true
  *         schema:
  *           type: integer
- *         description: Report ID
+ *           example: 1
+ *         description: Report ID.
  *     requestBody:
  *       required: true
  *       content:
@@ -198,7 +200,7 @@ const retrieve = async (req, res) => {
  */
 const update = async (req, res) => {
 	try {
-		const id = req.params.id;	
+		const id = req.params.id;
 
 		const { reason } = req.body;
 
@@ -210,7 +212,6 @@ const update = async (req, res) => {
 		});
 
 		return messages.success(res, "Report updated successfully");
-		
 	} catch (error) {
 		console.error("Updating report error: ", error);
 
@@ -235,7 +236,8 @@ const update = async (req, res) => {
  *         required: true
  *         schema:
  *           type: integer
- *         description: Report ID
+ *           example: 1
+ *         description: Report ID.
  *     responses:
  *       200:
  *         description: Report deleted successfully
@@ -258,12 +260,11 @@ const update = async (req, res) => {
  */
 const remove = async (req, res) => {
 	try {
-		const id = req.params.id;	
+		const id = req.params.id;
 
-		await prisma.report.delete({where: {id}});
+		await prisma.report.delete({ where: { id } });
 
 		return messages.deletedSuccessfully(res, "Report deleted Successfully");
-
 	} catch (error) {
 		console.error("Deleting report error: ", error);
 
@@ -271,15 +272,94 @@ const remove = async (req, res) => {
 	}
 };
 
+/**
+ * @openapi
+ * /reports:
+ *   get:
+ *     summary: Get all reports
+ *     description: Returns reports with optional pagination and reason search.
+ *     tags:
+ *       - Reports
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           example: 1
+ *         description: Page number. Use together with limit.
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *           example: 10
+ *         description: Number of reports per page. Use together with page.
+ *       - in: query
+ *         name: search
+ *         required: false
+ *         schema:
+ *           type: string
+ *           example: inappropriate
+ *         description: Searches report reasons.
+ *     responses:
+ *       200:
+ *         description: Reports retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                     example: 1
+ *                   reason:
+ *                     type: string
+ *                     example: This post contains inappropriate content.
+ *                   createdAt:
+ *                     type: string
+ *                     format: date-time
+ *                     example: "2026-06-24T10:00:00.000Z"
+ *                   post:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                         example: 1
+ *                       title:
+ *                         type: string
+ *                         example: Post title
+ *                       category:
+ *                         type: string
+ *                         example: Electronics
+ *                   user:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                         example: 7
+ *                       full_name:
+ *                         type: string
+ *                         example: Ahmad Ali
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       500:
+ *         description: Internal server error
+ */
 const get_all = async (req, res) => {
 	try {
-
 		let { page, limit, search } = req.query;
-		
 
-		const criteria = {
-
-		};
+		const criteria = {};
 
 		if (search) {
 			criteria.OR = [
@@ -289,58 +369,52 @@ const get_all = async (req, res) => {
 						mode: "insensitive"
 					}
 				}
-			]
+			];
 		}
-		
 
 		const queryOptions = {
-			where: {
-				criteria
-			},
-			orderBy: {"createdAt": "desc"},
+			where: criteria,
+			orderBy: { createdAt: "desc" },
 			select: {
 				id: true,
 				reason: true,
 				createdAt: true,
 				post: {
 					select: {
-						id,
-						title,
+						id: true,
+						title: true,
 						category: {
 							select: {
-								name
+								name: true
 							}
 						}
 					}
 				},
 				user: {
 					select: {
-						id,
-						full_name
+						id: true,
+						full_name: true
 					}
 				}
 			}
-		}
+		};
 
 		if (page !== undefined && limit !== undefined) {
 			queryOptions.skip = (page - 1) * limit;
 			queryOptions.take = limit;
 		}
 
-	
 		const reports = await prisma.report.findMany(queryOptions);
 
-		const formattedReports = reports.map((report) => {
+		const formattedReports = reports.map((report) => ({
 			...report,
 			post: {
-				...report.post, 
+				...report.post,
 				category: report.post.category.name
 			}
-		})
-
+		}));
 
 		return res.json(formattedReports);
-
 	} catch (error) {
 		console.error("Retreiving reports error: ", error);
 
@@ -355,3 +429,4 @@ module.exports = {
 	remove,
 	get_all
 };
+

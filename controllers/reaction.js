@@ -18,7 +18,8 @@ const messages = require("../helper/messages");
  *         required: true
  *         schema:
  *           type: integer
- *         description: Post ID that the reaction belongs to
+ *           example: 1
+ *         description: Post ID that the reaction belongs to.
  *     requestBody:
  *       required: true
  *       content:
@@ -57,13 +58,14 @@ const create = async (req, res) => {
 	try {
 		const post_id = req.params.post_id;
 		const user_id = req.session.user_id;
-		const { reaction } = req.body;	
+		const { reaction } = req.body;
 
 		// upsert: create new or update existing record
-		const response = await prisma.reaction.upsert({
+		await prisma.reaction.upsert({
 			where: {
-				userId_postId: { // compound key
-					postId: post_id, 
+				userId_postId: {
+					// compound key
+					postId: post_id,
 					userId: user_id
 				}
 			},
@@ -78,7 +80,6 @@ const create = async (req, res) => {
 		});
 
 		return messages.createdSuccessfully(res, "Reaction Saved Successfully");
-
 	} catch (error) {
 		console.error("Saving reaction error: ", error);
 
@@ -102,7 +103,8 @@ const create = async (req, res) => {
  *         required: true
  *         schema:
  *           type: integer
- *         description: Reaction ID
+ *           example: 1
+ *         description: Reaction ID.
  *     responses:
  *       200:
  *         description: Reaction loaded successfully
@@ -137,7 +139,6 @@ const retrieve = async (req, res) => {
 		const reaction = req.data;
 
 		res.json(reaction);
-
 	} catch (error) {
 		console.error("Retrieving reaction error: ", error);
 
@@ -162,7 +163,8 @@ const retrieve = async (req, res) => {
  *         required: true
  *         schema:
  *           type: integer
- *         description: Reaction ID
+ *           example: 1
+ *         description: Reaction ID.
  *     requestBody:
  *       required: true
  *       content:
@@ -197,7 +199,6 @@ const retrieve = async (req, res) => {
  *       500:
  *         description: Internal server error
  */
-
 const update = async (req, res) => {
 	try {
 		const id = req.params.id;
@@ -211,8 +212,6 @@ const update = async (req, res) => {
 		});
 
 		return messages.success(res, "Reaction updated successfully");
-
-		
 	} catch (error) {
 		console.error("Updating reaction error: ", error);
 
@@ -237,7 +236,8 @@ const update = async (req, res) => {
  *         required: true
  *         schema:
  *           type: integer
- *         description: Reaction ID
+ *           example: 1
+ *         description: Reaction ID.
  *     responses:
  *       200:
  *         description: Reaction deleted successfully
@@ -262,10 +262,9 @@ const remove = async (req, res) => {
 	try {
 		const id = req.params.id;
 
-		await prisma.reaction.delete({where: {id}});
+		await prisma.reaction.delete({ where: { id } });
 
 		return messages.deletedSuccessfully(res, "Reaction deleted Successfully");
-
 	} catch (error) {
 		console.error("Deleting reaction error: ", error);
 
@@ -279,3 +278,4 @@ module.exports = {
 	update,
 	remove
 };
+

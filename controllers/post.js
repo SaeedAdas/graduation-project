@@ -1,3 +1,4 @@
+const { Prisma } = require("@prisma/client");
 const prisma = require("../config/connection");
 const messages = require("../helper/messages");
 
@@ -22,8 +23,9 @@ const messages = require("../helper/messages");
  *               - title
  *             properties:
  *               category:
- *                 type: string
- *                 example: News
+ *                 type: integer
+ *                 example: 1
+ *                 description: Category ID.
  *               title:
  *                 type: string
  *                 example: My first post
@@ -43,7 +45,7 @@ const messages = require("../helper/messages");
  *                   type: string
  *                   example: Post Created Successfully
  *       400:
- *         description: Bad request / validation error
+ *         description: Bad request / validation error / invalid category
  *       401:
  *         description: Unauthorized
  *       403:
@@ -54,11 +56,11 @@ const messages = require("../helper/messages");
 
 const create = async (req, res) => {
 	try {
-		const { category, title, description } = req.body;	
+		const { category, title, description } = req.body;
 
 		const user_id = req.session.user_id;
 
-		const post = await prisma.post.create({
+		await prisma.post.create({
 			data: {
 				category_id: category,
 				title,
@@ -71,9 +73,10 @@ const create = async (req, res) => {
 
 	} catch (error) {
 		if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      			if (error.code === "P2003") {
-        			return messages.badRequest(res, "Invalid category");
-      			}
+			// Foreign key value not found in the base relation
+			if (error.code === "P2003") {
+				return messages.badRequest(res, "Invalid category");
+			}
 		}
 
 		console.error("Creating post error: ", error);
@@ -83,49 +86,53 @@ const create = async (req, res) => {
 };
 
 /**
-  * @openapi
-  * /post/{id}:
-  *   get:
-  *     summary: Get a single post
-  *     description: Returns one post by its ID.
-  *     tags:
-  *       - Posts
-  *     security:
-  *       - cookieAuth: []
-  *     parameters:
-  *       - in: path
-  *         name: id
-  *         required: true
-  *         schema:
-  *           type: integer
-  *         description: Post ID
-  *     responses:
-  *       200:
-  *         description: Post loaded successfully
-  *         content:
-  *           application/json:
-  *             schema:
-  *               type: object
-  *               properties:
-  *                 id:
-  *                   type: integer
-  *                   example: 1
-  *                 category:
-  *                   type: string
-  *                   example: News
-  *                 title:
-  *                   type: string
-  *                   example: My first post
-  *                 description:
-  *                   type: string
-  *                   example: This is the post description
-  *       401:
-  *         description: Unauthorized
-  *       403:
-  *         description: Forbidden
-  *       404:
-  *         description: Post not found
-  */
+ * @openapi
+ * /post/{id}:
+ *   get:
+ *     summary: Get a single post
+ *     description: Returns one post by its ID.
+ *     tags:
+ *       - Posts
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           example: 1
+ *         description: Post ID.
+ *     responses:
+ *       200:
+ *         description: Post loaded successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                   example: 1
+ *                 category:
+ *                   type: string
+ *                   example: News
+ *                 title:
+ *                   type: string
+ *                   example: My first post
+ *                 description:
+ *                   type: string
+ *                   nullable: true
+ *                   example: This is the post description
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Post not found
+ *       500:
+ *         description: Internal server error
+ */
 const retrieve = async (req, res) => {
 	const post = req.data;
 
@@ -133,105 +140,110 @@ const retrieve = async (req, res) => {
 };
 
 /**
-  * @openapi
-  * /posts:
-  *   get:
-  *     summary: Get  multiple posts
-  *     description: Returns posts by search queries and pagination
-  *     tags:
-  *       - Posts
-  *     security:
-  *       - cookieAuth: []
-  *     parameters:
-  *       - in: path
-  *         name: id
-  *         required: true
-  *         schema:
-  *           type: integer
-  *         description: Post ID
-  *     responses:
-  *       200:
-  *         description: Post loaded successfully
-  *         content:
-  *           application/json:
-  *             schema:
-  *               type: object
-  *               properties:
-  *                 id:
-  *                   type: integer
-  *                   example: 1
-  *                 category:
-  *                   type: string
-  *                   example: News
-  *                 title:
-  *                   type: string
-  *                   example: My first post
-  *                 description:
-  *                   type: string
-  *                   example: This is the post description
-  *       401:
-  *         description: Unauthorized
-  *       403:
-  *         description: Forbidden
-  *       500:
-  *         description: Server Error
-  */
+ * @openapi
+ * /posts:
+ *   get:
+ *     summary: Get multiple posts
+ *     description: Returns posts with optional pagination, search, and category filtering.
+ *     tags:
+ *       - Posts
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           example: 1
+ *         description: Page number. Use together with limit.
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *           example: 10
+ *         description: Number of posts per page. Use together with page.
+ *       - in: query
+ *         name: search
+ *         required: false
+ *         schema:
+ *           type: string
+ *           example: laptop
+ *         description: Search term.
+ *       - in: query
+ *         name: searchIn
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum:
+ *             - title
+ *             - description
+ *           example: title
+ *         description: Field to search in. If omitted, both title and description are searched.
+ *       - in: query
+ *         name: category
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           example: 3
+ *         description: Category ID.
+ *     responses:
+ *       200:
+ *         description: Posts retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   title:
+ *                     type: string
+ *                     example: Post title
+ *                   category:
+ *                     type: string
+ *                     example: Electronics
+ *                   description:
+ *                     type: string
+ *                     nullable: true
+ *                     example: Post description
+ *                   createdAt:
+ *                     type: string
+ *                     format: date-time
+ *                     example: "2026-06-24T10:00:00.000Z"
+ *                   _count:
+ *                     type: object
+ *                     properties:
+ *                       comments:
+ *                         type: integer
+ *                         example: 3
+ *                       reactions:
+ *                         type: integer
+ *                         example: 20
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       500:
+ *         description: Internal server error
+ */
 
 const get_posts = async (req, res) => {
 	try {
-
-
 		let { page, limit, search, searchIn, category } = req.query;
 
-		// tagged template literal and Prisma.sql lets you add part of the SQL conditionally, also this is safe to use against sql injection
-		/*
-		const safeSearchValue = `%${search}%`
-		const searchFilter = search 
-			? Prisma.sql`
-		        	AND ( 
-					p.title ILIKE ${safeSearchValue}
-					OR
-					p.description ILIKE ${safeSearchValue}
-				)
-			` : Prisma.empty;
-
-		*/
-		/*
-		 WITH 
-		 paginated_posts {
-		 	SELECT id, title, description, createdAt
-		 	FROM posts
-		 	WHERE title ILIKE ${search} OR description ILIKE ${search}
-		 	ORDER BY createdAt desc
-			LIMIT ${limit}
-			OFFSET ${skip}
-		 }
-
-		 SELECT pp.*, cm.*, c.name, COUNT(cm.id) AS commentsCount, COUNT(r.id) as reactionsCount, AVG(cm.rating) AS averageRatings
-		 FROM paginated_posts AS pp 
-		 INNER JOIN categories AS c
-		 LEFT JOIN comments AS cm
-		 LEFT JOIN reactions AS r
-		 
-
-		 *
-		 *
-		 *
-		 */
-
-		
 		// where clause should be retrieved from an authorization query scope engine
-		const authorizationWhere = {
-			
-		};
+		const authorizationWhere = {};
 
-		const criteria = {
-
-		};
+		const criteria = {};
 
 		// Non-existing categories would return [] regardless of page, limit, search
 		if (category !== undefined) {
-			criteria.category_id = category	
+			criteria.category_id = category;
 		}
 
 		if (search) {
@@ -239,7 +251,7 @@ const get_posts = async (req, res) => {
 				criteria[searchIn] = {
 					contains: search,
 					mode: "insensitive"
-				}
+				};
 			} else {
 				criteria.OR = [
 					{
@@ -254,18 +266,15 @@ const get_posts = async (req, res) => {
 							mode: "insensitive"
 						}
 					}
-				]
+				];
 			}
 		}
 
 		const queryOptions = {
 			where: {
-				AND: [
-					authorizationWhere,
-					criteria
-				]
+				AND: [authorizationWhere, criteria]
 			},
-			orderBy: {"createdAt": "desc"},
+			orderBy: { createdAt: "desc" },
 			select: {
 				title: true,
 				category: {
@@ -282,23 +291,21 @@ const get_posts = async (req, res) => {
 					}
 				}
 			}
-		}
+		};
 
 		if (page !== undefined && limit !== undefined) {
 			queryOptions.skip = (page - 1) * limit;
 			queryOptions.take = limit;
 		}
 
-	
 		const posts = await prisma.post.findMany(queryOptions);
 
 		const formattedPosts = posts.map((post) => ({
 			...post,
 			category: post.category.name
-		}))
+		}));
 
 		return res.json(formattedPosts);
-
 	} catch (error) {
 		console.error("Retreiving posts error: ", error);
 
@@ -322,7 +329,8 @@ const get_posts = async (req, res) => {
  *         required: true
  *         schema:
  *           type: integer
- *         description: Post ID
+ *           example: 1
+ *         description: Post ID.
  *     requestBody:
  *       required: true
  *       content:
@@ -331,8 +339,9 @@ const get_posts = async (req, res) => {
  *             type: object
  *             properties:
  *               category:
- *                 type: string
- *                 example: News
+ *                 type: integer
+ *                 example: 1
+ *                 description: Category ID.
  *               title:
  *                 type: string
  *                 example: Updated post title
@@ -352,7 +361,7 @@ const get_posts = async (req, res) => {
  *                   type: string
  *                   example: Post updated successfully
  *       400:
- *         description: Bad request / validation error
+ *         description: Bad request / validation error / invalid category
  *       401:
  *         description: Unauthorized
  *       403:
@@ -361,7 +370,6 @@ const get_posts = async (req, res) => {
  *         description: Post not found
  *       500:
  *         description: Internal server error
- *
  */
 
 const update = async (req, res) => {
@@ -371,7 +379,7 @@ const update = async (req, res) => {
 		const { category, title, description } = req.body;
 
 		await prisma.post.update({
-			where: {id},
+			where: { id },
 			data: {
 				category_id: category,
 				title,
@@ -380,20 +388,18 @@ const update = async (req, res) => {
 		});
 
 		return messages.success(res, "Post updated successfully");
-		
 	} catch (error) {
 		if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      			if (error.code === "P2003") {
-        			return messages.badRequest(res, "Invalid category");
-      			}
-    		}
+			if (error.code === "P2003") {
+				return messages.badRequest(res, "Invalid category");
+			}
+		}
 
 		console.error("updating post error: ", error);
 
 		return messages.serverError(res);
 	}
 };
-
 
 /**
  * @openapi
@@ -411,7 +417,8 @@ const update = async (req, res) => {
  *         required: true
  *         schema:
  *           type: integer
- *         description: Post ID
+ *           example: 1
+ *         description: Post ID.
  *     responses:
  *       200:
  *         description: Post deleted successfully
@@ -435,12 +442,11 @@ const update = async (req, res) => {
 
 const remove = async (req, res) => {
 	try {
-		const id = req.params.id;	
+		const id = req.params.id;
 
-		await prisma.post.delete({where: {id}});
+		await prisma.post.delete({ where: { id } });
 
 		return messages.deletedSuccessfully(res, "Post deleted Successfully");
-
 	} catch (error) {
 		console.error("Deleting post error: ", error);
 
@@ -455,3 +461,4 @@ module.exports = {
 	remove,
 	get_posts
 };
+
