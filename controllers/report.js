@@ -271,9 +271,87 @@ const remove = async (req, res) => {
 	}
 };
 
+const get_all = async (req, res) => {
+	try {
+
+		let { page, limit, search } = req.query;
+		
+
+		const criteria = {
+
+		};
+
+		if (search) {
+			criteria.OR = [
+				{
+					reason: {
+						contains: search,
+						mode: "insensitive"
+					}
+				}
+			]
+		}
+		
+
+		const queryOptions = {
+			where: {
+				criteria
+			},
+			orderBy: {"createdAt": "desc"},
+			select: {
+				id: true,
+				reason: true,
+				createdAt: true,
+				post: {
+					select: {
+						id,
+						title,
+						category: {
+							select: {
+								name
+							}
+						}
+					}
+				},
+				user: {
+					select: {
+						id,
+						full_name
+					}
+				}
+			}
+		}
+
+		if (page !== undefined && limit !== undefined) {
+			queryOptions.skip = (page - 1) * limit;
+			queryOptions.take = limit;
+		}
+
+	
+		const reports = await prisma.report.findMany(queryOptions);
+
+		const formattedReports = reports.map((report) => {
+			...report,
+			post: {
+				...report.post, 
+				category: report.post.category.name
+			}
+		})
+
+
+		return res.json(formattedReports);
+
+	} catch (error) {
+		console.error("Retreiving reports error: ", error);
+
+		return messages.serverError(res);
+	}
+};
+
 module.exports = {
 	create,
 	retrieve,
 	update,
-	remove
+	remove,
+	get_all
 };

@@ -30,20 +30,16 @@ const create = async (req, res) => {
 	}
 };
 
-
+/*
 const retrieve = async (req, res) => {
 	const category = req.data;
 
 	res.json(category);
 };
+*/
 
 const get_all = async (req, res) => {
 	try {
-		const user_role = req.user.role;
-
-		if (user_role != 'Admin') {
-			return messages.Unauthorized(res, "You're not allowed to get all categories");
-		}
 
 		let { page, limit, search } = req.query;
 		
@@ -158,7 +154,6 @@ const remove = async (req, res) => {
 
 module.exports = {
 	create,
-	retrieve,
 	update,
 	remove,
 	get_all

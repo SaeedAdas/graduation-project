@@ -132,14 +132,98 @@ const retrieve = async (req, res) => {
 	res.json(post);
 };
 
+/**
+  * @openapi
+  * /posts:
+  *   get:
+  *     summary: Get  multiple posts
+  *     description: Returns posts by search queries and pagination
+  *     tags:
+  *       - Posts
+  *     security:
+  *       - cookieAuth: []
+  *     parameters:
+  *       - in: path
+  *         name: id
+  *         required: true
+  *         schema:
+  *           type: integer
+  *         description: Post ID
+  *     responses:
+  *       200:
+  *         description: Post loaded successfully
+  *         content:
+  *           application/json:
+  *             schema:
+  *               type: object
+  *               properties:
+  *                 id:
+  *                   type: integer
+  *                   example: 1
+  *                 category:
+  *                   type: string
+  *                   example: News
+  *                 title:
+  *                   type: string
+  *                   example: My first post
+  *                 description:
+  *                   type: string
+  *                   example: This is the post description
+  *       401:
+  *         description: Unauthorized
+  *       403:
+  *         description: Forbidden
+  *       500:
+  *         description: Server Error
+  */
+
 const get_posts = async (req, res) => {
 	try {
 
 
 		let { page, limit, search, searchIn, category } = req.query;
+
+		// tagged template literal and Prisma.sql lets you add part of the SQL conditionally, also this is safe to use against sql injection
+		/*
+		const safeSearchValue = `%${search}%`
+		const searchFilter = search 
+			? Prisma.sql`
+		        	AND ( 
+					p.title ILIKE ${safeSearchValue}
+					OR
+					p.description ILIKE ${safeSearchValue}
+				)
+			` : Prisma.empty;
+
+		*/
+		/*
+		 WITH 
+		 paginated_posts {
+		 	SELECT id, title, description, createdAt
+		 	FROM posts
+		 	WHERE title ILIKE ${search} OR description ILIKE ${search}
+		 	ORDER BY createdAt desc
+			LIMIT ${limit}
+			OFFSET ${skip}
+		 }
+
+		 SELECT pp.*, cm.*, c.name, COUNT(cm.id) AS commentsCount, COUNT(r.id) as reactionsCount, AVG(cm.rating) AS averageRatings
+		 FROM paginated_posts AS pp 
+		 INNER JOIN categories AS c
+		 LEFT JOIN comments AS cm
+		 LEFT JOIN reactions AS r
+		 
+
+		 *
+		 *
+		 *
+		 */
+
 		
 		// where clause should be retrieved from an authorization query scope engine
-		const authorizationWhere = {};
+		const authorizationWhere = {
+			
+		};
 
 		const criteria = {
 
@@ -232,7 +316,6 @@ const get_posts = async (req, res) => {
  *       - Posts
  *     security:
  *       - cookieAuth: []
- *         csrfToken: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -322,7 +405,6 @@ const update = async (req, res) => {
  *       - Posts
  *     security:
  *       - cookieAuth: []
- *         csrfToken: []
  *     parameters:
  *       - in: path
  *         name: id
