@@ -29,7 +29,20 @@ app.use(session({
 	store: new pgSession({
 		pool: pgPool,
 		tableName: "session",
-		createTableIfMissing: true
+		createTableIfMissing: true,
+		tableName: "session",
+
+		// Table already exists. Do not check/create it every time.
+		createTableIfMissing: false,
+			
+		// Very important for Neon Free:
+		// prevents connect-pg-simple from waking the DB every 15 minutes.
+		pruneSessionInterval: false,
+			
+		// Reduces writes on every request.
+	        // Session expiry becomes absolute, not sliding.
+		disableTouch: true,
+		ttl: 60 * 60 * 24 * 7
 	}),
 	name: "sid",
 	secret: process.env.SESSION_SECRET,
