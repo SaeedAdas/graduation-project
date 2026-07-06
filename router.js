@@ -96,7 +96,7 @@ router.get(
 );
 
 router.get(	
-	"/my-posts", 
+	"/user/posts", 
 	authenticate, 
 	validate({ query: queryValidator.post }),
 	userController.posts

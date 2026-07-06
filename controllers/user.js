@@ -462,6 +462,7 @@ const update_profile = async (req, res) => {
  *       500:
  *         description: Internal server error
  */
+
 const posts = async (req, res) => {
 	try {
 		const id = req.user.id;
