@@ -1,5 +1,8 @@
 const { z } = require("zod");
 
+const UserStatus = ["Active", "Inactive"];
+const UserRoles = ["User", "Admin"];
+
 function hasIncreasingDigitSequence(password, minLength = 4) {
 	let count = 1;
 
@@ -37,21 +40,7 @@ const passwordSchema = z
     		"Password cannot contain 4 or more increasing numbers in sequence"
   	)
 
-const register = z.object({
-	full_name: z
-		.string("Full name must be a string")
-		.min(3, "Minimum length of full name is 3"),
-	email: z.email("Must follow email format username@domain.tld"),
-	password: passwordSchema
-});
-
-const login = z.object({
-	email: z.email("Must follow email format username@domain.tld"),
-	password: passwordSchema,
-	rememberMe: z.boolean("rememberMe must be a boolean")
-});
-
-const update = z.object({
+const profile = {
 	full_name: z.string("Full name must be a string"),
 	phone: z.string("Phone must be a string").regex(/^(?:\+97[02]5[69]\d{7}|05[69]\d{7})$/, {
   			message: "Invalid phone number, must start with 056 or 059 or +97259 or +97256 followed by 7 numbers"
@@ -63,10 +52,34 @@ const update = z.object({
 	birthdate: z.iso.date({
     		error: "Birthdate must be in YYYY-MM-DD format"
   	})
+}
+
+const register = z.object({
+	full_name: profile.full_name,
+	email: z.email("must follow email format username@domain.tld"),
+	password: passwordSchema
+});
+
+const login = z.object({
+	email: z.email("Must follow email format username@domain.tld"),
+	password: passwordSchema,
+	rememberMe: z.boolean("rememberMe must be a boolean")
+});
+
+const update_profile = z.object(profile);
+
+const addOrUpdate = z.object({
+	...profile,
+	password: passwordSchema,
+	email: z.email("must follow email format username@domain.tld"),
+	status: z.enum(UserStatus),
+	role: z.enum(UserRoles)
 });
 
 module.exports = {
 	register,
         login,
-	update
+	update_profile,
+	addOrUpdate
+	
 };
