@@ -502,7 +502,6 @@ const posts = async (req, res) => {
 
 		const queryOptions = {
 			where,
-			orderBy: { createdAt: "desc" },
 			select: {
 				title: true,
 				category: true,

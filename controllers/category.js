@@ -51,6 +51,7 @@ const messages = require("../helper/messages");
  *       500:
  *         description: Internal server error
  */
+
 const create = async (req, res) => {
 	try {
 		const { name, description } = req.body;
@@ -150,6 +151,7 @@ const create = async (req, res) => {
  *       500:
  *         description: Internal server error
  */
+
 const get_all = async (req, res) => {
 	try {
 		let { page, limit, search } = req.query;
@@ -180,7 +182,6 @@ const get_all = async (req, res) => {
 			where: {
 				AND: [authorizationWhere, criteria]
 			},
-			orderBy: { createdAt: "desc" },
 			select: {
 				id: true,
 				name: true,
@@ -266,9 +267,14 @@ const get_all = async (req, res) => {
  *       500:
  *         description: Internal server error
  */
+
 const update = async (req, res) => {
 	try {
 		const id = req.params.id;
+
+		if (id == 1) {
+			return messages.badRequest(res, "You can't update the general category");
+		}
 
 		const { name, description } = req.body;
 
@@ -333,9 +339,14 @@ const update = async (req, res) => {
  *       500:
  *         description: Internal server error
  */
+
 const remove = async (req, res) => {
 	try {
 		const id = req.params.id;
+
+		if (id == 1) {
+			return messages.badRequest(res, "You can't delete the general category");
+		}
 
 		await prisma.category.delete({ where: { id } });
 
