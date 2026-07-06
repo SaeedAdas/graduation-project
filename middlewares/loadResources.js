@@ -86,7 +86,7 @@ const loadCategory = async (req, res, next) => {
 	try {
 		const id = req.params.id;
 		
-		const category = await prisma.post.findUnique({where:{ id }});
+		const category = await prisma.category.findUnique({where:{ id }});
 
 		if (!category) {
 			return messages.notFound(res, "Category not found");
