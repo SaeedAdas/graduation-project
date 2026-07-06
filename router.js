@@ -5,14 +5,14 @@ const { swaggerOptions, swaggerSpec } = require("./config/swagger");
 
 
 // middlewares
-const userValidation = require("./validations/user");
-const postValidation = require("./validations/post");
-const commentValidation = require("./validations/comment");
-const reportValidation = require("./validations/report");
-const reactionValidation = require("./validations/reaction");
-const categoryValidation = require("./validations/category");
-const parameterValidation = require("./validations/parameter");
-const queryValidation = require("./validations/query");
+const userValidator = require("./validations/user");
+const postValidator = require("./validations/post");
+const commentValidator = require("./validations/comment");
+const reportValidator = require("./validations/report");
+const reactionValidator = require("./validations/reaction");
+const categoryValidator = require("./validations/category");
+const parameterValidator = require("./validations/parameter");
+const queryValidator = require("./validations/query");
 const { authenticate } = require("./middlewares/authenticate");
 const { authorize } = require("./middlewares/authorize");
 const { validate } = require("./middlewares/validate");
@@ -42,14 +42,45 @@ router.use("/api-docs", authenticate, authorize("api", "view"), swaggerUi.serve,
 
 router.post(
 	"/auth/login", 
-	validate({ body: userValidation.login }), 
+	validate({ body: userValidator.login }), 
 	userController.login
 );
 
 router.post(
 	"/user/register", 
-	validate({ body: userValidation.register }), 
+	validate({ body: userValidator.register }), 
 	userController.register
+);
+
+router.get(
+	"/users", 
+	authenticate, 
+	authorize("users", "view_all"),
+	userController.get_all
+);
+
+router.post(
+	"/user", 
+	authenticate, 
+	validate({ body: userValidator.addOrUpdate }), 
+	authorize("users", "create"), 
+	userController.add
+);
+
+router.put(
+	"/user/:id", 
+	authenticate, 
+	validate({ body: userValidator.addOrUpdate, params: parameterValidator.id }), 
+	authorize("users", "update"), 
+	userController.update
+);
+
+router.delete(
+	"/user/:id", 
+	authenticate, 
+	validate({ params: parameterValidator.id }), 
+	authorize("users", "remove"), 
+	userController.remove
 );
 
 router.post(
@@ -67,21 +98,21 @@ router.get(
 router.get(	
 	"/my-posts", 
 	authenticate, 
-	validate({ query: queryValidation.post }),
+	validate({ query: queryValidator.post }),
 	userController.posts
 );
 
 router.put(
 	"/user/profile", 
 	authenticate, 
-	validate({ body: userValidation.update }), 
+	validate({ body: userValidator.update_update }), 
 	userController.update_profile
 );
 
 router.post(
 	"/post", 
 	authenticate, 
-	validate({ body: postValidation.create }), 
+	validate({ body: postValidator.create }), 
 	authorize("posts", "create"), 
 	postController.create
 );
@@ -90,14 +121,14 @@ router.post(
 router.get(
 	"/posts", 
 	authenticate, 
-	validate({ query: queryValidation.post }), 
+	validate({ query: queryValidator.post }), 
 	postController.get_posts
 );
 
 router.get(
 	"/post/:id", 
 	authenticate, 
-	validate({ params: parameterValidation.id }), 
+	validate({ params: parameterValidator.id }), 
 	loadPost, 
 	authorize("posts", "view"), 
 	postController.retrieve
@@ -106,7 +137,7 @@ router.get(
 router.put(
 	"/post/:id", 
 	authenticate, 
-	validate({ body: postValidation.update, params: parameterValidation.id }), 
+	validate({ body: postValidator.update, params: parameterValidator.id }), 
 	loadPost, 
 	authorize("posts", "update"), 
 	postController.update
@@ -115,7 +146,7 @@ router.put(
 router.delete(
 	"/post/:id", 
 	authenticate, 
-	validate({ params: parameterValidation.id }), 
+	validate({ params: parameterValidator.id }), 
 	loadPost, 
 	authorize("posts", "remove"), 
 	postController.remove
@@ -124,7 +155,7 @@ router.delete(
 router.post(
 	"/comment/:post_id", 
 	authenticate, 
-	validate({ body: commentValidation.create, params: parameterValidation.post_id }), 
+	validate({ body: commentValidator.create, params: parameterValidator.post_id }), 
 	loadPost, 
 	authorize("comments", "create"), 
 	commentController.create
@@ -133,7 +164,7 @@ router.post(
 router.get(
 	"/comment/:id", 
 	authenticate, 
-	validate({ params: parameterValidation.id }), 
+	validate({ params: parameterValidator.id }), 
 	loadComment, 
 	authorize("comments", "view"), 
 	commentController.retrieve
@@ -141,7 +172,7 @@ router.get(
 router.put(
 	"/comment/:id", 
 	authenticate, 
-	validate({ body: commentValidation.update, params: parameterValidation.post_id }), 
+	validate({ body: commentValidator.update, params: parameterValidator.post_id }), 
 	loadComment, 
 	authorize("comments", "update"), 
 	commentController.update
@@ -149,7 +180,7 @@ router.put(
 router.delete(
 	"/comment/:id", 
 	authenticate, 
-	validate({ params: parameterValidation.id }), 
+	validate({ params: parameterValidator.id }), 
 	loadComment, 
 	authorize("comments", "remove"), 
 	commentController.remove
@@ -158,7 +189,7 @@ router.delete(
 router.post(
 	"/report/:post_id", 
 	authenticate, 
-	validate({ body: reportValidation.create, params: parameterValidation.post_id }), 
+	validate({ body: reportValidator.create, params: parameterValidator.post_id }), 
 	loadPost, 
 	authorize("reports", "create"), 
 	reportController.create
@@ -167,16 +198,24 @@ router.post(
 router.get(
 	"/report/:id", 
 	authenticate, 
-	validate({ params: parameterValidation.id }),
+	validate({ params: parameterValidator.id }),
 	loadReport, 
 	authorize("reports", "view"), 
 	reportController.retrieve
 );
 
+router.get(
+	"/reports", 
+	authenticate, 
+	validate({ query: queryValidator.report }), 
+	authorize("reports", "view_all"), 
+	reportController.get_all
+);
+
 router.put(
 	"/report/:id", 
 	authenticate, 
-	validate({ body: reportValidation.update, params: parameterValidation.id }), 
+	validate({ body: reportValidator.update, params: parameterValidator.id }), 
 	loadReport, 
 	authorize("reports", "update"), 
 	reportController.update
@@ -185,7 +224,7 @@ router.put(
 router.delete(
 	"/report/:id", 
 	authenticate, 
-	validate({ params: parameterValidation.id }), 
+	validate({ params: parameterValidator.id }), 
 	loadReport, 
 	authorize("reports", "remove"), 
 	reportController.remove
@@ -194,7 +233,7 @@ router.delete(
 router.post(
 	"/reaction/:post_id", 
 	authenticate, 
-	validate({ body: reactionValidation.create, params: parameterValidation.post_id }), 
+	validate({ body: reactionValidator.create, params: parameterValidator.post_id }), 
 	loadPost, 
 	authorize("reactions", "create"), 
 	reactionController.create
@@ -203,7 +242,7 @@ router.post(
 router.get(
 	"/reaction/:id", 
 	authenticate, 
-	validate({ params: parameterValidation.id }), 
+	validate({ params: parameterValidator.id }), 
 	loadReaction, 
 	authorize("reactions", "view"), 
 	reactionController.retrieve
@@ -212,7 +251,7 @@ router.get(
 router.put(
 	"/reaction/:id", 
 	authenticate, 
-	validate({ body: reactionValidation.update, params: parameterValidation.id }), 
+	validate({ body: reactionValidator.update, params: parameterValidator.id }), 
 	loadReaction, 
 	authorize("reactions", "update"), 
 	reactionController.update
@@ -221,7 +260,7 @@ router.put(
 router.delete(
 	"/reaction/:id", 
 	authenticate, 
-	validate({ params: parameterValidation.id }), 
+	validate({ params: parameterValidator.id }), 
 	loadReaction, 
 	authorize("reactions", "remove"), 
 	reactionController.remove
@@ -230,7 +269,7 @@ router.delete(
 router.post(
 	"/category", 
 	authenticate, 
-	validate({ body: categoryValidation.create }), 
+	validate({ body: categoryValidator.create }), 
 	authorize("categories", "create"), 
 	categoryController.create
 );
@@ -239,7 +278,7 @@ router.post(
 router.get(
 	"/category/:id", 
 	authenticate, 
-	validate({ params: parameterValidation.id }), 
+	validate({ params: parameterValidator.id }), 
 	loadCategory,
 	authorize("categories", "view"), 
 	categoryController.retrieve
@@ -249,7 +288,8 @@ router.get(
 router.get(
 	"/categories", 
 	authenticate, 
-	validate({ query: queryValidation.category }), 
+	validate({ query: queryValidator.category }), 
+	authorize("categories", "view_all"),
 	categoryController.get_all
 );
 
@@ -257,7 +297,7 @@ router.get(
 router.put(
 	"/category/:id", 
 	authenticate, 
-	validate({ body: categoryValidation.update, params: parameterValidation.id }), 
+	validate({ body: categoryValidator.update, params: parameterValidator.id }), 
 	loadCategory,
 	authorize("categories", "update"), 
 	categoryController.update
@@ -266,7 +306,7 @@ router.put(
 router.delete(
 	"/category/:id", 
 	authenticate, 
-	validate({ params: parameterValidation.id }), 
+	validate({ params: parameterValidator.id }), 
 	loadCategory,
 	authorize("categories", "remove"), 
 	categoryController.remove
