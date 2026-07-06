@@ -21,7 +21,7 @@ const pagination_search = {
 };
 
 const pagination_search_schema = z
-	.object(pagination_searc)
+	.object(pagination_search)
 	.refine(
 		(data) => (data.page === undefined) === (data.limit === undefined),
 		{
