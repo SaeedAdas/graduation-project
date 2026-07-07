@@ -18,6 +18,28 @@ app.use(cors({
 
 app.use(express.json());
 
+// Debugging neon high compute time
+app.use((req, res, next) => {
+        const startedAt = Date.now();
+
+        res.on("finish", () => {
+                const hasSidCookie = req.headers.cookie?.includes("sid=") || false;
+
+                console.log(
+                        `[REQ] ${new Date().toISOString()} ${req.method} ${req.originalUrl} ` +
+                        `${res.statusCode} ${Date.now() - startedAt}ms sidCookie=${hasSidCookie}`
+                );
+        });
+
+        next();
+});
+
+app.get("/keep-alive", (req, res) => {
+	res.status(200).json({
+		message: "Kept alive successfully"
+	})
+});
+
 const pgPool = new Pool({
 	  connectionString: process.env.DATABASE_URL,
 	  ssl: process.env.NODE_ENV === "production"
@@ -76,11 +98,6 @@ app.get("/csrf-token", (req, res, next) => {
   	}
 });
 
-app.get("/keep-alive", (req, res) => {
-	res.status(200).json({
-		message: "Kept alive successfully"
-	})
-});
 
 app.use(csrfProtection);
 
@@ -94,6 +111,8 @@ app.use((error, req, res, next) => {
     		message: "Internal server error"
   	});
 });
+
+
 
 
 
