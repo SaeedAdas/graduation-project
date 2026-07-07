@@ -261,7 +261,7 @@ const get_posts = async (req, res) => {
 
 		const posts = await prisma.$queryRaw`
 			WITH filtered_posts AS (
-				SELECT p.id, p.title, c.name, p.description, p."createdAt"
+				SELECT p.id, p.title, c.name, p.description, p.created_at
 				FROM posts p
 				INNER JOIN categories c	 ON c.id = p.category_id
 				WHERE 1 = 1 
@@ -272,7 +272,7 @@ const get_posts = async (req, res) => {
 			paginated_posts AS (
 				SELECT *
 				FROM filtered_posts fp
-				ORDER BY "createdAt" DESC
+				ORDER BY created_at DESC
 				LIMIT ${limit}
 				OFFSET ${skip}
 			),
