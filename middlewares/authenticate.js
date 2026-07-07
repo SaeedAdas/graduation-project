@@ -18,7 +18,10 @@ async function authenticate(req, res, next) {
 			return messages.Unauthenticated(res);
 		}
 	
-		req.user = user;
+		req.user = {
+			...user,
+			birthdate: user.birthdate?.toISOString().slice(0, 10) ?? null
+		}
 
 		next();
 	} catch (error) {

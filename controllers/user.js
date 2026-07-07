@@ -905,7 +905,7 @@ const update = async (req, res) => {
 
 const get_all = async (req, res) => {
 	try {
-		const users = await prisma.user.findMany({
+		const result = await prisma.user.findMany({
 			select: {
 				id: true,
 				full_name: true,
@@ -920,7 +920,13 @@ const get_all = async (req, res) => {
 			}
 		});
 
-		res.json(users);
+		const users = result.map((user) => {
+			...user,
+			birthdate: user.birthdate?.toISOString().slice(0, 10) ?? null
+		})
+
+		return res.json(users);
+		
 	} catch (error) {
 		console.error("Error retreiving all users: ", error);
 
