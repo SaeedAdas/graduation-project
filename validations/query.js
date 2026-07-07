@@ -36,10 +36,8 @@ const post = z
 			.enum(postFieldsEnum)
 			.optional(),
 		category: z
-			.coerce
-			.number("Category must be a number")
-			.int("Category must be an integer")
-			.min(1, "Category should be at least 1")
+			.string("Please input the category name")
+			.min(3, "Category should be at least 3 characters")
 			.optional(),
 	})
 	.refine(

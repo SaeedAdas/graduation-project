@@ -237,6 +237,70 @@ const get_posts = async (req, res) => {
 		let { page, limit, search, searchIn, category } = req.query;
 
 		// where clause should be retrieved from an authorization query scope engine
+
+		const searchValue = `%${search}%`
+
+		const searchFilter = search
+			? Prisma.sql`
+				AND (
+					p.title ILIKE ${searchValue}
+					OR
+					p.description ILIKE ${searchValue}
+				)
+			` : Prisma.empty;
+		
+		const categoryFilter = category
+			? Prisma.sql`
+				AND (
+					c.name ILIKE ${category}	
+				)
+			` : Prisma.empty;
+
+		const posts = await prisma.$queryRaw`
+			WITH filtered_posts AS (
+				SELECT p.id, p.title, c.name, p.description, p.createdAt
+				FROM posts p
+				INNER JOIN categories c	 ON c.id == p.category_id
+				WHERE 1 = 1 
+					${searchFilter}
+					${categoryFilter}
+			),
+
+			paginated_posts AS (
+				SELECT *
+				FROM filtered_posts fp
+				ORDER BY createdAt desc
+				LIMIT ${limit}
+				OFFSET ${skip}
+			),
+
+			comments_stats (
+				SELECT post_id, COALESCE(COUNT(*), 0) AS comments_count, COALESCE(ROUND(AVG(rating)::numeric, 1), 0) AS averageRating
+				FROM comments
+				WHERE post_ IN (
+					SELECT id FROM paginated_posts
+				)
+				GROUP BY post_id
+			),
+			
+			reactions_stats (
+				SELECT post_id, COALESCE(COUNT(*), 0) AS reactionsCount
+				FROM reactions
+				WHERE post_id IN (
+					SELECT id FROM paginated_posts
+				)
+				GROUP BY post_id
+			)
+
+			SELECT pp.*, cm.comments_count, cm.averageRating, r.reactionsCount
+			FROM paginated_posts pp
+			LEFT JOIN comments_stats cm ON cm.post_id = pp.id
+			LEFT JOIN reactions_stats r ON r.post_id = pp.id
+
+		`;
+
+
+		/*
 		const authorizationWhere = {};
 
 		const criteria = {};
@@ -304,8 +368,9 @@ const get_posts = async (req, res) => {
 			...post,
 			category: post.category.name
 		}));
+		*/
 
-		return res.json(formattedPosts);
+		return res.json(posts);
 	} catch (error) {
 		console.error("Retreiving posts error: ", error);
 
