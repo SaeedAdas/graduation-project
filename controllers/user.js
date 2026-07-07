@@ -1,6 +1,7 @@
 const bcrypt = require("bcryptjs");
 const { Prisma, UserStatus } = require("@prisma/client");
 const prisma = require("../config/connection");
+const { handlePrismaError } = require("../helper/prismaErrors");
 const messages = require("../helper/messages");
 const { rotateCsrfToken } = require("../middlewares/csrf");
 
@@ -200,12 +201,11 @@ const register = async (req, res) => {
 		return messages.createdSuccessfully(res, "Account created successfully");
 
 	} catch (error) {
-		if (
-			error instanceof Prisma.PrismaClientKnownRequestError &&
-			error.code === "P2002"
-		) {
-			return messages.alreadyExists(res, "Email already exists");
-		}
+		const handled = handlePrismaError(res, error, {
+			uniqueMessage: "Email already exists"
+		});
+
+		if (handled) return handled;
 
 		console.error("Register error:", error);
 
@@ -813,18 +813,12 @@ const update = async (req, res) => {
 
 		return messages.success(res, "Account updated successfully");
 	} catch (error) {
-		if (
-			error instanceof Prisma.PrismaClientKnownRequestError &&
-			error.code === "P2002"
-		) {
-			return messages.alreadyExists(res, "Email or phone already exists");
-		}
+		const handled = handlePrismaError(res, error, {
+			uniqueMessage: "Email or phone already exists",
+			notFoundMessage: "User not found"
+		});
 
-		if (error instanceof Prisma.PrismaClientKnownRequestError) {
-			if (error.code === "P2025") {
-				return messages.badRequest(res, "User not found");
-			}
-		}
+		if (handled) return handled;
 
 		console.error("Updating user error:", error);
 
@@ -987,11 +981,12 @@ const remove = async (req, res) => {
 
 		return messages.deletedSuccessfully(res, "User deleted Successfully");
 	} catch (error) {
-		if (error instanceof Prisma.PrismaClientKnownRequestError) {
-			if (error.code === "P2025") {
-				return messages.badRequest(res, "User not found");
-			}
-		}
+		const handled = handlePrismaError(res, error, {
+			notFoundMessage: "User not found"
+		});
+
+		if (handled) return handled;
+
 		console.error("Deleting user error: ", error);
 
 		return messages.serverError(res);
