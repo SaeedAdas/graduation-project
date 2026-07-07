@@ -241,6 +241,7 @@ const get_posts = async (req, res) => {
 		const skip = (page - 1) * limit;
 
 		const searchValue = `%${search}%`
+		const categoryValue = `%${category}%`
 
 		const searchFilter = search
 			? Prisma.sql`
@@ -254,15 +255,15 @@ const get_posts = async (req, res) => {
 		const categoryFilter = category
 			? Prisma.sql`
 				AND (
-					c.name ILIKE ${category}	
+					c.name ILIKE ${categoryValue}	
 				)
 			` : Prisma.empty;
 
 		const posts = await prisma.$queryRaw`
 			WITH filtered_posts AS (
-				SELECT p.id, p.title, c.name, p.description, p.createdAt
+				SELECT p.id, p.title, c.name, p.description, p."createdAt"
 				FROM posts p
-				INNER JOIN categories c	 ON c.id == p.category_id
+				INNER JOIN categories c	 ON c.id = p.category_id
 				WHERE 1 = 1 
 					${searchFilter}
 					${categoryFilter}
@@ -271,21 +272,21 @@ const get_posts = async (req, res) => {
 			paginated_posts AS (
 				SELECT *
 				FROM filtered_posts fp
-				ORDER BY createdAt desc
+				ORDER BY "createdAt" DESC
 				LIMIT ${limit}
 				OFFSET ${skip}
 			),
 
-			comments_stats (
+			comments_stats AS (
 				SELECT post_id, COALESCE(COUNT(*), 0) AS comments_count, COALESCE(ROUND(AVG(rating)::numeric, 1), 0) AS averageRating
 				FROM comments
-				WHERE post_ IN (
+				WHERE post_id IN (
 					SELECT id FROM paginated_posts
 				)
 				GROUP BY post_id
 			),
 			
-			reactions_stats (
+			reactions_stats AS (
 				SELECT post_id, COALESCE(COUNT(*), 0) AS reactionsCount
 				FROM reactions
 				WHERE post_id IN (
