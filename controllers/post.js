@@ -1,6 +1,8 @@
 const { Prisma } = require("@prisma/client");
 const prisma = require("../config/connection");
 const messages = require("../helper/messages");
+const { handlePrismaError } = require("../helper/prismaErrors");
+const postRepository = require("../repositories/postRepository");
 
 /**
  * @openapi
@@ -72,12 +74,11 @@ const create = async (req, res) => {
 		return messages.createdSuccessfully(res, "Post Created Successfully");
 
 	} catch (error) {
-		if (error instanceof Prisma.PrismaClientKnownRequestError) {
-			// Foreign key value not found in the base relation
-			if (error.code === "P2003") {
-				return messages.badRequest(res, "Invalid category");
-			}
-		}
+		const handled = handlePrismaError(res, error, {
+			foreignKeyMessage: "Category id not found"
+		});
+
+		if (handled) return handled;
 
 		console.error("Creating post error: ", error);
 
@@ -232,167 +233,12 @@ const retrieve = async (req, res) => {
  *         description: Internal server error
  */
 
-const get_posts = async (req, res) => {
+const listPosts = async (req, res) => {
 	try {
-		let { page, limit, search, searchIn, category } = req.query;
-
-		// where clause should be retrieved from an authorization query scope engine
-
-		const skip = (page - 1) * limit;
-
-		const searchValue = `%${search}%`
-		const categoryValue = `%${category}%`
-
-		const searchFilter = search
-			? Prisma.sql`
-				AND (
-					p.title ILIKE ${searchValue}
-					OR
-					p.description ILIKE ${searchValue}
-				)
-			` : Prisma.empty;
-		
-		const categoryFilter = category
-			? Prisma.sql`
-				AND (
-					c.name ILIKE ${categoryValue}	
-				)
-			` : Prisma.empty;
-		
-		const paginationClause = page
-			? Prisma.sql`
-				LIMIT ${limit}
-				OFFSET ${skip}
-			` : Prisma.empty;
-
-		const posts = await prisma.$queryRaw`
-			WITH filtered_posts AS (
-				SELECT 
-					p.id, 
-					p.title, 
-					c.name, 
-					p.description, 
-					p.created_at
-				FROM posts p
-				INNER JOIN categories c	 ON c.id = p.category_id
-				WHERE 1 = 1 
-					${searchFilter}
-					${categoryFilter}
-			),
-
-			paginated_posts AS (
-				SELECT *
-				FROM filtered_posts fp
-				ORDER BY created_at DESC
-				${paginationClause}
-			),
-
-			comments_stats AS (
-				SELECT 
-					post_id, 
-					COUNT(*)::int AS comments_count, 
-					ROUND(AVG(rating)::numeric, 1)::float AS average_rating
-				FROM comments
-				WHERE post_id IN (
-					SELECT id FROM paginated_posts
-				)
-				GROUP BY post_id
-			),
-			
-			reactions_stats AS (
-				SELECT 
-					post_id, 
-					COUNT(*)::int AS reactions_count
-				FROM reactions
-				WHERE post_id IN (
-					SELECT id FROM paginated_posts
-				)
-				GROUP BY post_id
-			)
-
-			SELECT 
-				pp.*, 
-				COALESCE(cm.comments_count, 0)::int AS "commentsCount", 
-				COALESCE(cm.average_rating, 0)::float AS "averageRating", 
-				COALESCE(r.reactions_count, 0)::int AS "reactionsCount"
-			FROM paginated_posts pp
-			LEFT JOIN comments_stats cm ON cm.post_id = pp.id
-			LEFT JOIN reactions_stats r ON r.post_id = pp.id
-
-		`;
-
-
-		/*
-		const authorizationWhere = {};
-
-		const criteria = {};
-
-		// Non-existing categories would return [] regardless of page, limit, search
-		if (category !== undefined) {
-			criteria.categoryId = category;
-		}
-
-		if (search) {
-			if (searchIn != undefined) {
-				criteria[searchIn] = {
-					contains: search,
-					mode: "insensitive"
-				};
-			} else {
-				criteria.OR = [
-					{
-						title: {
-							contains: search,
-							mode: "insensitive"
-						}
-					},
-					{
-						description: {
-							contains: search,
-							mode: "insensitive"
-						}
-					}
-				];
-			}
-		}
-
-		const queryOptions = {
-			where: {
-				AND: [authorizationWhere, criteria]
-			},
-			orderBy: { createdAt: "desc" },
-			select: {
-				title: true,
-				category: {
-					select: {
-						name: true
-					}
-				},
-				description: true,
-				createdAt: true,
-				_count: {
-					select: {
-						comments: true,
-						reactions: true
-					}
-				}
-			}
-		};
-
-		if (page !== undefined && limit !== undefined) {
-			queryOptions.skip = (page - 1) * limit;
-			queryOptions.take = limit;
-		}
-
-		const posts = await prisma.post.findMany(queryOptions);
-
-		const formattedPosts = posts.map((post) => ({
-			...post,
-			category: post.category.name
-		}));
-		*/
+		const posts = await postRepository.listPostsWithStats(req.query);
 
 		return res.json(posts);
+
 	} catch (error) {
 		console.error("Retreiving posts error: ", error);
 
@@ -476,11 +322,11 @@ const update = async (req, res) => {
 
 		return messages.success(res, "Post updated successfully");
 	} catch (error) {
-		if (error instanceof Prisma.PrismaClientKnownRequestError) {
-			if (error.code === "P2003") {
-				return messages.badRequest(res, "Invalid category");
-			}
-		}
+		const handled = handlePrismaError(res, error, {
+			foreignKeyMessage: "Category id not found"
+		});
+
+		if (handled) return handled;
 
 		console.error("updating post error: ", error);
 
@@ -546,6 +392,6 @@ module.exports = {
 	retrieve,
 	update,
 	remove,
-	get_posts
+	listPosts
 };
 
