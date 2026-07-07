@@ -1,6 +1,6 @@
 const { z } = require("zod");
 
-const postFieldsEnum = ["description", "title"];
+const searchableFields = ["description", "title"];
 
 const pagination_search = {
 		page: z
@@ -33,7 +33,7 @@ const post = z
 	.object({
 		...pagination_search,
 		searchIn: z
-			.enum(postFieldsEnum)
+			.enum(searchableFields, "Please input a valid search field: title, description")
 			.optional(),
 		category: z
 			.string("Please input the category name")

@@ -122,7 +122,7 @@ router.get(
 	"/posts", 
 	authenticate, 
 	validate({ query: queryValidator.post }), 
-	postController.get_posts
+	postController.listPosts
 );
 
 router.get(
