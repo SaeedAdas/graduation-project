@@ -188,9 +188,9 @@ const retrieve = async (req, res) => {
  *         name: category
  *         required: false
  *         schema:
- *           type: integer
- *           example: 3
- *         description: Category ID.
+ *           type: String
+ *           example: Electronics
+ *         description: Category name.
  *     responses:
  *       200:
  *         description: Posts retrieved successfully
@@ -215,15 +215,15 @@ const retrieve = async (req, res) => {
  *                     type: string
  *                     format: date-time
  *                     example: "2026-06-24T10:00:00.000Z"
- *                   _count:
- *                     type: object
- *                     properties:
- *                       comments:
- *                         type: integer
- *                         example: 3
- *                       reactions:
- *                         type: integer
- *                         example: 20
+ *                   commentsCount:
+ *                     type: number
+ *                     example: 3
+ *                   averageRating:
+ *                     type: float
+ *                     example: 4.2
+ *                   reactionsCount:
+ *                     type: number
+ *                     example: 3
  *       401:
  *         description: Unauthorized
  *       403:
