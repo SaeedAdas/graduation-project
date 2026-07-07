@@ -238,6 +238,8 @@ const get_posts = async (req, res) => {
 
 		// where clause should be retrieved from an authorization query scope engine
 
+		const skip = (page - 1) * limit;
+
 		const searchValue = `%${search}%`
 
 		const searchFilter = search
