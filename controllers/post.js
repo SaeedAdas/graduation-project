@@ -291,7 +291,7 @@ const get_posts = async (req, res) => {
 				SELECT 
 					post_id, 
 					COUNT(*)::int AS comments_count, 
-					ROUND(AVG(rating)::numeric, 1)::float AS averageRating
+					ROUND(AVG(rating)::numeric, 1)::float AS average_rating
 				FROM comments
 				WHERE post_id IN (
 					SELECT id FROM paginated_posts
@@ -302,7 +302,7 @@ const get_posts = async (req, res) => {
 			reactions_stats AS (
 				SELECT 
 					post_id, 
-					COUNT(*)::int AS reactionsCount
+					COUNT(*)::int AS reactions_count
 				FROM reactions
 				WHERE post_id IN (
 					SELECT id FROM paginated_posts
@@ -312,9 +312,9 @@ const get_posts = async (req, res) => {
 
 			SELECT 
 				pp.*, 
-				COALESCE(cm.comments_count, 0)::int AS "commentsCount, 
-				COALESCE(cm.averageRating, 0)::float AS "averageRating", 
-				COALESCE(r.reactionsCount, 0)::int AS "reactionsCount"
+				COALESCE(cm.comments_count, 0)::int AS "commentsCount", 
+				COALESCE(cm.average_rating, 0)::float AS "averageRating", 
+				COALESCE(r.reactions_count, 0)::int AS "reactionsCount"
 			FROM paginated_posts pp
 			LEFT JOIN comments_stats cm ON cm.post_id = pp.id
 			LEFT JOIN reactions_stats r ON r.post_id = pp.id
