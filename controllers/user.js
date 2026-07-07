@@ -920,10 +920,10 @@ const get_all = async (req, res) => {
 			}
 		});
 
-		const users = result.map((user) => {
+		const users = result.map((user) => ({
 			...user,
 			birthdate: user.birthdate?.toISOString().slice(0, 10) ?? null
-		})
+		}))
 
 		return res.json(users);
 		
