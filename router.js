@@ -68,6 +68,13 @@ router.post(
 );
 
 router.put(
+	"/user/profile", 
+	authenticate, 
+	validate({ body: userValidator.update_profile }), 
+	userController.update_profile
+);
+
+router.put(
 	"/user/:id", 
 	authenticate, 
 	validate({ body: userValidator.addOrUpdate, params: parameterValidator.id }), 
@@ -102,12 +109,6 @@ router.get(
 	userController.posts
 );
 
-router.put(
-	"/user/profile", 
-	authenticate, 
-	validate({ body: userValidator.update_profile }), 
-	userController.update_profile
-);
 
 router.post(
 	"/post", 
