@@ -45,6 +45,11 @@ const post = z
 		{
 			message: "Page and limit must be provided together or discarded together"
 		}
+	).refine(
+		(data) => (data.searchIn && !data.search),
+		{
+			message: "Search query parameter must be provided if searchIn is provided""
+		}
 	);
 
 const category = pagination_search_schema;
