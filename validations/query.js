@@ -46,9 +46,9 @@ const post = z
 			message: "Page and limit must be provided together or discarded together"
 		}
 	).refine(
-		(data) => (data.searchIn && !data.search),
+		(data) => !data.searchIn || !!data.search, // !!data.search always returns a boolean
 		{
-			message: "Search query parameter must be provided if searchIn is provided""
+			message: "Search query parameter must be provided if searchIn is provided"
 		}
 	);
 
