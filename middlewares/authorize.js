@@ -1,5 +1,5 @@
 const messages = require('../helper/messages');
-const { hasPermission } = require("../permissions/engine");
+const { hasPermission } = require("../permissions/policyEngine");
 
 function authorize(resource, action) {
 	return function (req, res, next) {

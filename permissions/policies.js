@@ -1,4 +1,4 @@
-const ROLES = {
+const POLICIES = {
 	Admin: {
 		posts: {
 			view: true,
@@ -89,4 +89,4 @@ const ROLES = {
 	}
 };
 
-module.exports = ROLES;
+module.exports = POLICIES;
