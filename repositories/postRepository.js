@@ -40,14 +40,20 @@ const listPostsWithStats = async ({ page, limit, search, searchIn, category, con
 	const skip = (page - 1) * limit;
 
         const searchValue = `%${search}%`
+        const searchInValue = `%${searchIn}%`
         const categoryValue = `%${category}%`
 
 	// condition is an object with key represnting field and the value 
 	const conditionsFilter = buildConditionFilter(condition);
 
-        const searchFilter = search
+        const searchFilter = searchIn
         	? Prisma.sql`
                 	AND (
+                        	p.${searchIn} ILIKE ${searchValue}
+                        )
+		` : search
+		? Prisma.sql`
+			AND (
                         	p.title ILIKE ${searchValue}
                                 OR
                                 p.description ILIKE ${searchValue}
