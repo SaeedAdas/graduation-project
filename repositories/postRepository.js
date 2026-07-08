@@ -2,6 +2,11 @@
 const { Prisma } = require("@prisma/client");
 const prisma = require("../config/connection");
 
+const searchableFields = {
+	title: Prisma.sql`p.title`,
+	description: Prisma.sql`p.description`,
+}
+
 const allowedPostsCondition = {
 	userId: Prisma.sql`p.user_id`
 }
@@ -39,8 +44,8 @@ function buildConditionFilter(conditions) {
 const listPostsWithStats = async ({ page, limit, search, searchIn, category, condition }) => {
 	const skip = (page - 1) * limit;
 
+	const searchColumn = searchableFields[searchIn];
         const searchValue = `%${search}%`
-        const searchInValue = `%${searchIn}%`
         const categoryValue = `%${category}%`
 
 	// condition is an object with key represnting field and the value 
@@ -49,7 +54,7 @@ const listPostsWithStats = async ({ page, limit, search, searchIn, category, con
         const searchFilter = searchIn
         	? Prisma.sql`
                 	AND (
-                        	p.${searchIn} ILIKE ${searchValue}
+                        	${searchColumn} ILIKE ${searchValue}
                         )
 		` : search
 		? Prisma.sql`
