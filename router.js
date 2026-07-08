@@ -105,7 +105,7 @@ router.get(
 router.put(
 	"/user/profile", 
 	authenticate, 
-	validate({ body: userValidator.update_update }), 
+	validate({ body: userValidator.update_profile }), 
 	userController.update_profile
 );
 
@@ -172,7 +172,7 @@ router.get(
 router.put(
 	"/comment/:id", 
 	authenticate, 
-	validate({ body: commentValidator.update, params: parameterValidator.post_id }), 
+	validate({ body: commentValidator.update, params: parameterValidator.id }), 
 	loadComment, 
 	authorize("comments", "update"), 
 	commentController.update
