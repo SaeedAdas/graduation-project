@@ -1,6 +1,7 @@
 const { Prisma } = require("@prisma/client");
 const prisma = require("../config/connection");
 const messages = require("../helper/messages");
+const { handlePrismaError } = require("../helper/prismaErrors");
 
 /**
  * @openapi
@@ -65,15 +66,13 @@ const create = async (req, res) => {
 
 		return messages.createdSuccessfully(res, "Category Saved Successfully");
 	} catch (error) {
-		console.error("Saving category error: ", error);
+		const handled = handlePrismaError(res, error, {
+			uniqueMessage: "Category name already Exists"
+		});
 
-		// catches unique names
-		if (
-			error instanceof Prisma.PrismaClientKnownRequestError &&
-			error.code === "P2002"
-		) {
-			return messages.alreadyExists(res, "Category name already exists");
-		}
+		if (handled) return handled;
+
+		console.error("Saving category error: ", error);
 
 		return messages.serverError(res);
 	}
@@ -288,12 +287,12 @@ const update = async (req, res) => {
 
 		return messages.success(res, "Category updated successfully");
 	} catch (error) {
-		if (
-			error instanceof Prisma.PrismaClientKnownRequestError &&
-			error.code === "P2002"
-		) {
-			return messages.alreadyExists(res, "Category name already exists");
-		}
+		const handled = handlePrismaError(res, error, {
+			uniqueMessage: "Category name already Exists"
+		});
+
+		if (handled) return handled;
+
 		console.error("Updating category error: ", error);
 
 		return messages.serverError(res);

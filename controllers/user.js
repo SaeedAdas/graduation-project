@@ -1,8 +1,9 @@
 const bcrypt = require("bcryptjs");
 const { Prisma, UserStatus } = require("@prisma/client");
 const prisma = require("../config/connection");
-const { handlePrismaError } = require("../helper/prismaErrors");
 const messages = require("../helper/messages");
+const postRepository = require("../repositories/postRepository");
+const { handlePrismaError } = require("../helper/prismaErrors");
 const { rotateCsrfToken } = require("../middlewares/csrf");
 
 const HASH_COST_FACTOR = 12;
@@ -360,12 +361,12 @@ const update_profile = async (req, res) => {
 
 		return messages.success(res, "User profile updated successfully");
 	} catch (error) {
-		if (
-			error instanceof Prisma.PrismaClientKnownRequestError &&
-			error.code === "P2002"
-		) {
-			return messages.alreadyExists(res, "Phone already exists");
-		}
+		const handled = handlePrismaError(res, error, {
+			uniqueMessage: "Phone already exists"
+		});
+
+		if (handled) return handled;
+
 		console.error("Updating Profile error:", error);
 
 		return messages.serverError(res);
@@ -421,9 +422,9 @@ const update_profile = async (req, res) => {
  *         name: category
  *         required: false
  *         schema:
- *           type: integer
- *           example: 3
- *         description: Category ID.
+ *           type: String
+ *           example: Electronics
+ *         description: Category name.
  *     responses:
  *       200:
  *         description: Posts retrieved successfully
@@ -448,17 +449,19 @@ const update_profile = async (req, res) => {
  *                     type: string
  *                     format: date-time
  *                     example: "2026-06-24T10:00:00.000Z"
- *                   _count:
- *                     type: object
- *                     properties:
- *                       comments:
- *                         type: integer
- *                         example: 3
- *                       reactions:
- *                         type: integer
- *                         example: 20
+ *                   commentsCount:
+ *                     type: number
+ *                     example: 3
+ *                   averageRating:
+ *                     type: float
+ *                     example: 4.2
+ *                   reactionsCount:
+ *                     type: number
+ *                     example: 3
  *       401:
- *         description: Unauthenticated
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
  *       500:
  *         description: Internal server error
  */
@@ -467,69 +470,14 @@ const posts = async (req, res) => {
 	try {
 		const id = req.user.id;
 
-		let { page, limit, search, searchIn, category } = req.query;
-
-		const where = {
-			userId: id
+		const condition = {
+			userId: id	
 		};
 
-		if (category !== undefined) {
-			where.categoryId = category;
-		}
+		const posts = await postRepository.loadPostsWithStats({ ...req.query, condition });
 
-		if (search) {
-			if (searchIn != undefined) {
-				where[searchIn] = {
-					contains: search,
-					mode: "insensitive"
-				};
-			} else {
-				where.OR = [
-					{
-						title: {
-							contains: search,
-							mode: "insensitive"
-						}
-					},
-					{
-						description: {
-							contains: search,
-							mode: "insensitive"
-						}
-					}
-				];
-			}
-		}
+		return res.json(posts);
 
-		const queryOptions = {
-			where,
-			select: {
-				title: true,
-				category: true,
-				description: true,
-				createdAt: true,
-				_count: {
-					select: {
-						comments: true,
-						reactions: true
-					}
-				}
-			}
-		};
-
-		if (page !== undefined && limit !== undefined) {
-			queryOptions.skip = (page - 1) * limit;
-			queryOptions.take = limit;
-		}
-
-		const posts = await prisma.post.findMany(queryOptions);
-
-		const formattedPosts = posts.map((post) => ({
-			...post,
-			category: post.category.name
-		}));
-
-		return res.json(formattedPosts);
 	} catch (error) {
 		console.error("Retreiving my-posts error: ", error);
 
@@ -690,12 +638,12 @@ const add = async (req, res) => {
 
 		return messages.createdSuccessfully(res, "Account created successfully");
 	} catch (error) {
-		if (
-			error instanceof Prisma.PrismaClientKnownRequestError &&
-			error.code === "P2002"
-		) {
-			return messages.alreadyExists(res, "Email or phone already exists");
-		}
+		const handled = handlePrismaError(res, error, {
+			uniqueMessage: "Email or phone already exists"
+		});
+
+		if (handled) return handled;
+
 		console.error("Adding user error:", error);
 
 		return messages.serverError(res);
