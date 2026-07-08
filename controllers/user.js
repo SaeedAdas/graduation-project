@@ -474,12 +474,12 @@ const posts = async (req, res) => {
 			userId: id	
 		};
 
-		const posts = await postRepository.loadPostsWithStats({ ...req.query, condition });
+		const posts = await postRepository.listPostsWithStats({ ...req.query, condition });
 
 		return res.json(posts);
 
 	} catch (error) {
-		console.error("Retreiving my-posts error: ", error);
+		console.error("Retreiving current user posts error: ", error);
 
 		return messages.serverError(res);
 	}
