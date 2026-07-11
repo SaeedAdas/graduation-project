@@ -18,22 +18,6 @@ app.use(cors({
 
 app.use(express.json());
 
-// Debugging neon high compute time
-app.use((req, res, next) => {
-        const startedAt = Date.now();
-
-        res.on("finish", () => {
-                const hasSidCookie = req.headers.cookie?.includes("sid=") || false;
-
-                console.log(
-                        `[REQ] ${new Date().toISOString()} ${req.method} ${req.originalUrl} ` +
-                        `${res.statusCode} ${Date.now() - startedAt}ms sidCookie=${hasSidCookie}`
-                );
-        });
-
-        next();
-});
-
 app.get("/keep-alive", (req, res) => {
 	res.status(200).json({
 		message: "Kept alive successfully"
@@ -51,15 +35,13 @@ app.use(session({
 	store: new pgSession({
 		pool: pgPool,
 		tableName: "session",
-		createTableIfMissing: true,
-		tableName: "session",
 
 		// Table already exists. Do not check/create it every time.
 		createTableIfMissing: false,
 			
 		// Very important for Neon Free:
-		// prevents connect-pg-simple from waking the DB every 15 minutes.
-		pruneSessionInterval: false,
+		// connect-pg-simple was waking the DB every 15 minutes. Now it's 24 hours
+		pruneSessionInterval: 60 * 60 * 24,
 			
 		// Reduces writes on every request.
 	        // Session expiry becomes absolute, not sliding.
