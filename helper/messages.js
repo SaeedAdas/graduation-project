@@ -2,13 +2,13 @@
 
 exports.success = (res, message = "Operation successful") => {
 	return res.status(200).json({
-		message: message 
+		message
 	});
 };
 
 exports.createdSuccessfully = (res, message = "Created successfully") => {
 	return res.status(201).json({
-		message: message 
+		message
 	});
 };
 
@@ -44,13 +44,19 @@ exports.Unauthorized = (res, message = "Forbidden") => {
 
 exports.notFound = (res, message = "Not found") => {
 	return res.status(404).json({
-		message: message 
+		message
 	});
 };
 
 exports.alreadyExists = (res, message = "Already exists") => {
 	return res.status(409).json({
-		message: message 
+		message
+	});
+};
+
+exports.rateLimit = (res, message = "Too many requests") => {
+	return res.status(429).json({
+		message
 	});
 };
 
