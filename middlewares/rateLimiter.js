@@ -134,6 +134,55 @@ const loginRateLimiter = async (req, res, next) => {
  * return redis.eval(SLIDING_WINDOW_COUNTER, [currentWindowKey, previousWindowKey], [overlapRatio, ttlSeconds, limit]);
  */
 
+/* Implementing token bucket
+ * const capacity = 20; // max tokens of bucket
+ * const tokensPerSecond = 1; // tokens refill per second
+ * const cost = 2; // Request cost
+ * const key = `rl:token-bucket:${scope}:${identifier}`
+ * const currentTimeMs = Date.now()
+ * const idleTTLSeconds = Math.ceil(capacity / tokensPerSecond);
+ * const TOKEN_BUCKET = `
+ *	local allowed = 1
+ *	local key = KEYS[1]
+ *	local currentTimeMs = tonumber(ARGV[1])
+ *	local bucketCapacity = tonumber(ARGV[2])
+ *	local requestCost = tonumber(ARGV[3])
+ *	local tokensPerSecond = tonumber(ARGV[4])
+ *	local ttlSeconds = tonumber(ARGV[5])
+ *
+ *	local values = redis.call("HMGET", key, "tokens", "last_refill")
+ *	local storedTokens = values[1]
+ *	local lastRefillMs = values[2]
+ *	
+ *	if storedTokens == false or lastRefillMs == false then
+ *		storedTokens = capacity
+ *		lastRefillMs = currentTimeMs
+ *	else
+ *		storedTokens = tonumber(storedTokens)
+ *		lastRefillMs = tonumber(lastRefillMs)
+ *	end
+ *
+ *	local elapsedSeconds = math.max(0, (currentTimeMs - lastRefillMs) / 1000)
+ *
+ *	local earnedTokens = elapsedSeconds * tokensPerSecond
+ *
+ *	local availableTokens = math.min(capacity, storedTokens + earnedTokens)
+ *	local remainingTokens = availableTokens - requestCost
+ *
+ *	if remainingTokens >= 0
+ *		redis.call("HSET", key, "tokens", remainingTokens, "last_refill", currentTimeMs)
+ *	else 
+ *		redis.call("HSET", key, "tokens", availableTokens, "last_refill", currentTimeMs)
+ *		allowed = 0
+ *	end
+ *
+ *	redis.call("EXPIRE", key, ttlSeconds)
+ *
+ * 	return allowed
+ * `;
+ * return redis.eval(TOKEN_BUCKET, [key], [currentTimeMs, capacity, cost, tokensPerSecond, idleTTLSeconds])
+ */
+
 module.exports = { 
 	loginRateLimiter 
 };
