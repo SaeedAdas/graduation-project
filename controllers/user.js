@@ -270,8 +270,9 @@ const profile = async (req, res) => {
 		const birthdate = req.user.birthdate;
 		const bio = req.user.bio;
 		const city = req.user.city;
+		const role = req.user.role;
 
-		const user = { full_name, email, phone, birthdate, bio, city };
+		const user = { full_name, email, phone, birthdate, bio, city, role };
 
 		return res.json(user);
 
