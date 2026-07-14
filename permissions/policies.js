@@ -71,7 +71,7 @@ const POLICIES = {
 		},
 		categories: {
 			view: true,
-			view_all: false,
+			view_all: true,
 			create: false,
 			update: false,
 			remove: false
