@@ -86,9 +86,17 @@ const login = z.object({
 
 const update_profile = z.object(profile);
 
-const addOrUpdate = z.object({
+const add = z.object({
 	...profile,
 	password: passwordSchema,
+	email: z.email("must follow email format username@domain.tld"),
+	status: z.enum(UserStatus),
+	role: z.enum(UserRoles)
+});
+
+const update = z.object({
+	...profile,
+	password: passwordSchema.optional(),
 	email: z.email("must follow email format username@domain.tld"),
 	status: z.enum(UserStatus),
 	role: z.enum(UserRoles)
@@ -98,6 +106,6 @@ module.exports = {
 	register,
         login,
 	update_profile,
-	addOrUpdate
-	
+	add,
+	update
 };

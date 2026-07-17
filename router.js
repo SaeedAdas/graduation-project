@@ -62,7 +62,7 @@ router.get(
 router.post(
 	"/user", 
 	authenticate, 
-	validate({ body: userValidator.addOrUpdate }), 
+	validate({ body: userValidator.add }), 
 	authorize("users", "create"), 
 	userController.add
 );
@@ -77,7 +77,7 @@ router.put(
 router.put(
 	"/user/:id", 
 	authenticate, 
-	validate({ body: userValidator.addOrUpdate, params: parameterValidator.id }), 
+	validate({ body: userValidator.update, params: parameterValidator.id }), 
 	authorize("users", "update"), 
 	userController.update
 );
