@@ -77,7 +77,7 @@ router.put(
 router.put(
 	"/user/:id", 
 	authenticate, 
-	validate({ body: userValidator.update, params: parameterValidator.id }), 
+	validate({ body: userValidator.update, params: parameterValidator.black_listed_admins }), 
 	authorize("users", "update"), 
 	userController.update
 );
@@ -85,7 +85,7 @@ router.put(
 router.delete(
 	"/user/:id", 
 	authenticate, 
-	validate({ params: parameterValidator.id }), 
+	validate({ params: parameterValidator.black_listed_admins }), 
 	authorize("users", "remove"), 
 	userController.remove
 );
@@ -298,7 +298,7 @@ router.get(
 router.put(
 	"/category/:id", 
 	authenticate, 
-	validate({ body: categoryValidator.update, params: parameterValidator.id }), 
+	validate({ body: categoryValidator.update, params: parameterValidator.black_listed_categories }), 
 	loadCategory,
 	authorize("categories", "update"), 
 	categoryController.update
@@ -307,7 +307,7 @@ router.put(
 router.delete(
 	"/category/:id", 
 	authenticate, 
-	validate({ params: parameterValidator.id }), 
+	validate({ params: parameterValidator.black_listed_categories }), 
 	loadCategory,
 	authorize("categories", "remove"), 
 	categoryController.remove

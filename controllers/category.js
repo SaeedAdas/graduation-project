@@ -271,10 +271,6 @@ const update = async (req, res) => {
 	try {
 		const id = req.params.id;
 
-		if (id == 1) {
-			return messages.badRequest(res, "You can't update the general category");
-		}
-
 		const { name, description } = req.body;
 
 		await prisma.category.update({
@@ -342,10 +338,6 @@ const update = async (req, res) => {
 const remove = async (req, res) => {
 	try {
 		const id = req.params.id;
-
-		if (id == 1) {
-			return messages.badRequest(res, "You can't delete the general category");
-		}
 
 		await prisma.category.delete({ where: { id } });
 

@@ -745,9 +745,6 @@ const update = async (req, res) => {
 	try {
 		const id = req.params.id;
 
-		if (id == 1) {
-			return messages.badRequest(res, "You can't update this user");
-		}
 
 		const { full_name, email, password, city, bio, birthdate, phone, role, status } = req.body;
 
@@ -924,10 +921,6 @@ const get_all = async (req, res) => {
 const remove = async (req, res) => {
 	try {
 		const id = req.params.id;
-
-		if (id == 1) {
-			return messages.badRequest(res, "You can't delete this user");
-		}
 
 		await prisma.user.delete({ where: { id } });
 
