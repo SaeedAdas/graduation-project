@@ -41,7 +41,7 @@ function buildConditionFilter(conditions) {
 	
 };
 
-const listPostsWithStats = async ({ page, limit, search, searchIn, category, condition }) => {
+const listPostsWithStats = async ({ page, limit, search, searchIn, category, currentUserId, condition }) => {
 	const skip = (page - 1) * limit;
 
 	const searchColumn = searchableFields[searchIn];
@@ -83,6 +83,7 @@ const listPostsWithStats = async ({ page, limit, search, searchIn, category, con
                      	SELECT
                         	p.id,
                                 p.title,
+                                p.user_id,
                                 c.name,
                                 p.description,
                                 p.created_at
@@ -97,7 +98,7 @@ const listPostsWithStats = async ({ page, limit, search, searchIn, category, con
                 paginated_posts AS (
                         SELECT *
                         FROM filtered_posts fp
-                        ORDER BY created_at DESC
+                        ORDER BY created_at DESC, id DESC
                         ${paginationClause}
                 ),
 
@@ -116,6 +117,7 @@ const listPostsWithStats = async ({ page, limit, search, searchIn, category, con
                 reactions_stats AS (
                         SELECT
                                 post_id,
+				user_id,
                                 COUNT(*)::int AS reactions_count
                         FROM reactions
                         WHERE post_id IN (
@@ -128,7 +130,15 @@ const listPostsWithStats = async ({ page, limit, search, searchIn, category, con
                         pp.*,
                         COALESCE(cm.comments_count, 0)::int AS "commentsCount",
                         COALESCE(cm.average_rating, 0)::float AS "averageRating",
-                        COALESCE(r.reactions_count, 0)::int AS "reactionsCount"
+                        COALESCE(r.reactions_count, 0)::int AS "reactionsCount",
+
+			EXISTS (
+				SELECT 1
+				FROM reactions current_reaction
+				WHERE current_reaction.post_id = pp.id
+					AND current_reaction.user_id = ${currentUserId}
+			) AS "hasReacted"
+		
                 FROM paginated_posts pp
                 LEFT JOIN comments_stats cm ON cm.post_id = pp.id
                 LEFT JOIN reactions_stats r ON r.post_id = pp.id

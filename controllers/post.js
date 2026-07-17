@@ -235,7 +235,8 @@ const retrieve = async (req, res) => {
 
 const listPosts = async (req, res) => {
 	try {
-		const posts = await postRepository.listPostsWithStats(req.query);
+		const user_id = req.user.id;
+		const posts = await postRepository.listPostsWithStats({...req.query, currentUserId: user_id});
 
 		return res.json(posts);
 
