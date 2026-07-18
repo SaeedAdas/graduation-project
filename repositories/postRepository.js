@@ -103,12 +103,22 @@ const listPostsWithStats = async ({ page, limit, search, searchIn, category, cur
                         ${paginationClause}
                 ),
 
+		user_average_rating AS (
+			SELECT
+            			post_id,
+            			user_id,
+	    			COUNT(*)::int AS comments_count,
+            			AVG(rating)::numeric AS user_average_rating
+        		FROM comments
+                 	GROUP BY post_id, user_id
+		),
+
                 comments_stats AS (
                         SELECT
                                 post_id,
-                                COUNT(*)::int AS comments_count,
-                                ROUND(AVG(rating)::numeric, 1)::float AS average_rating
-                        FROM comments
+                                SUM(comments_count) AS comments_count,
+                                ROUND(AVG(user_average_rating)::numeric, 1)::float AS average_rating
+                        FROM user_average_rating
                         WHERE post_id IN (
                                 SELECT id FROM paginated_posts
                         )
