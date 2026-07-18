@@ -83,12 +83,13 @@ const listPostsWithStats = async ({ page, limit, search, searchIn, category, cur
                      	SELECT
                         	p.id,
                                 p.title,
-                                p.user_id,
+                                u.full_name,
                                 c.name,
                                 p.description,
                                 p.created_at
                         FROM posts p
                         INNER JOIN categories c  ON c.id = p.category_id
+                        INNER JOIN users u  ON u.id = p.user_id
                         WHERE 1 = 1
 				${conditionsFilter}
                                 ${searchFilter}
@@ -136,7 +137,14 @@ const listPostsWithStats = async ({ page, limit, search, searchIn, category, cur
 				FROM reactions current_reaction
 				WHERE current_reaction.post_id = pp.id
 					AND current_reaction.user_id = ${currentUserId}
-			) AS "hasReacted"
+			) AS "hasReacted",
+
+			EXISTS (
+				SELECT 1
+				FROM reports current_report
+				WHERE current_report.post_id = pp.id
+					AND current_report.user_id = ${currentUserId}
+			) AS "hasReported"
 		
                 FROM paginated_posts pp
                 LEFT JOIN comments_stats cm ON cm.post_id = pp.id
