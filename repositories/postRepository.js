@@ -117,7 +117,6 @@ const listPostsWithStats = async ({ page, limit, search, searchIn, category, cur
                 reactions_stats AS (
                         SELECT
                                 post_id,
-				user_id,
                                 COUNT(*)::int AS reactions_count
                         FROM reactions
                         WHERE post_id IN (
