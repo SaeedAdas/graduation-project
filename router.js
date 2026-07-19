@@ -238,6 +238,13 @@ router.delete(
 	reportController.remove
 );
 
+router.delete(
+	"/report/post/:post_id", 
+	authenticate, 
+	validate({ params: parameterValidator.post_id }), 
+	reactionController.remove_user_report
+);
+
 router.post(
 	"/reaction/:post_id", 
 	authenticate, 
@@ -272,6 +279,13 @@ router.delete(
 	loadReaction, 
 	authorize("reactions", "remove"), 
 	reactionController.remove
+);
+
+router.delete(
+	"/reaction/post/:post_id", 
+	authenticate, 
+	validate({ params: parameterValidator.post_id }), 
+	reactionController.remove_user_reaction
 );
 
 router.post(

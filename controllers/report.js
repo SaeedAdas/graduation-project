@@ -276,6 +276,65 @@ const remove = async (req, res) => {
 
 /**
  * @openapi
+ * /report/post/{post_id}:
+ *   delete:
+ *     summary: Delete the current user report on post
+ *     description: Deletes an existing report by its post id and user id
+ *     tags:
+ *       - Reports
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: post_id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           example: 1
+ *         description: Post ID.
+ *     responses:
+ *       204:
+ *         description: Report deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Report deleted Successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden / invalid CSRF token
+ *       404:
+ *         description: Report not found
+ *       500:
+ *         description: Internal server error
+ */
+
+const remove_user_report = async (req, res) => {
+	try {
+		const post_id = req.params.post_id;
+		const user_id = req.user.id
+
+		await prisma.report.delete({ 
+			where: { 
+				postId: post_id,
+				userId: user_id
+			} 
+		});
+
+		return messages.deletedSuccessfully(res, "User Report deleted Successfully");
+	} catch (error) {
+		console.error("Deleting report error: ", error);
+
+		return messages.serverError(res);
+	}
+};
+
+/**
+ * @openapi
  * /reports:
  *   get:
  *     summary: Get all reports
@@ -357,6 +416,7 @@ const remove = async (req, res) => {
  *       500:
  *         description: Internal server error
  */
+
 const get_all = async (req, res) => {
 	try {
 		let { page, limit, search } = req.query;

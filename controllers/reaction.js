@@ -272,10 +272,70 @@ const remove = async (req, res) => {
 	}
 };
 
+/**
+ * @openapi
+ * /reaction/post/{post_id}:
+ *   delete:
+ *     summary: Delete the current's user reaction on the post
+ *     description: Deletes an existing user reaction by post id.
+ *     tags:
+ *       - Reactions
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: post_id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           example: 1
+ *         description: Post ID.
+ *     responses:
+ *       204:
+ *         description: Reaction deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Reaction deleted Successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden / invalid CSRF token
+ *       404:
+ *         description: Reaction not found
+ *       500:
+ *         description: Internal server error
+ */
+
+const remove_user_reaction = async (req, res) => {
+	try {
+		const user_id = req.user.id;
+		const post_id = req.params.post_id;
+
+		await prisma.reaction.delete({ 
+			where: { 
+				userId: user_id,
+				postId: post_id
+			} 
+		});
+
+		return messages.deletedSuccessfully(res, "User Reaction deleted Successfully");
+	} catch (error) {
+		console.error("Deleting reaction error: ", error);
+
+		return messages.serverError(res);
+	}
+};
+
 module.exports = {
 	create,
 	retrieve,
 	update,
-	remove
+	remove,
+	remove_user_reaction
 };
 
