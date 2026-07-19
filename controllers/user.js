@@ -334,12 +334,18 @@ const public_profile = async (req, res) => {
 		const user = await prisma.user.findUnique({
 			where: {
 				id: user_id
+			},
+			select: {
+				full_name: true,
+				phone: true,
+				birthdate: true,
+				bio: true,
+				city: true,
+				createdAt: true
 			}
 		});
 
-		const public_data = { user.full_name, user.phone, user.birthdate, user.bio, user.city, user.createdAt };
-
-		return res.json(public_data);
+		return res.json(user);
 
 	} catch (error) {
 		console.error("Retrieving public profile error:", error);
