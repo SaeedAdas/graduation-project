@@ -293,6 +293,14 @@ const profile = async (req, res) => {
  *       - Users
  *     security:
  *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           example: 2
+ *         description: User ID
  *     responses:
  *       200:
  *         description: Profile loaded successfully
