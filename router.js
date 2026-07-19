@@ -102,6 +102,13 @@ router.get(
 	userController.profile
 );
 
+router.get(
+	"/user/profile/:id", 
+	authenticate, 
+	validate({ params: parameterValidator.id }), 
+	userController.public_profile
+);
+
 router.get(	
 	"/user/posts", 
 	authenticate, 

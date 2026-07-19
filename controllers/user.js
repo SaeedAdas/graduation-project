@@ -285,6 +285,71 @@ const profile = async (req, res) => {
 
 /**
  * @openapi
+ * /user/profile/{id}:
+ *   get:
+ *     summary: Get public user profile
+ *     description: Returns the profile information of the requested id
+ *     tags:
+ *       - Users
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Profile loaded successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 full_name:
+ *                   type: string
+ *                   example: Ahmad Ali
+ *                 phone:
+ *                   type: string
+ *                   nullable: true
+ *                   example: "+970599000000"
+ *                 birthdate:
+ *                   type: string
+ *                   format: date
+ *                   nullable: true
+ *                   example: "2000-01-15"
+ *                 bio:
+ *                   type: string
+ *                   nullable: true
+ *                   example: Software engineering student.
+ *                 city:
+ *                   type: string
+ *                   nullable: true
+ *                   example: Gaza
+ *       401:
+ *         description: Unauthenticated
+ *       500:
+ *         description: Internal server error
+ */
+
+const public_profile = async (req, res) => {
+	try {
+		const user_id = req.params.id;
+
+		const user = await prisma.user.findUnique({
+			where: {
+				id: user_id
+			}
+		});
+
+		const public_data = { user.full_name, user.phone, user.birthdate, user.bio, user.city, user.createdAt };
+
+		return res.json(public_data);
+
+	} catch (error) {
+		console.error("Retrieving public profile error:", error);
+
+		return messages.serverError(res);
+	}
+};
+
+/**
+ * @openapi
  * /user/profile:
  *   put:
  *     summary: Update user profile
@@ -942,6 +1007,7 @@ module.exports = {
 	login,
 	register,
 	profile,
+	public_profile,
 	update_profile,
 	logout,
 	posts,
