@@ -7,12 +7,14 @@ const pagination_search = {
 			.coerce
 			.number("Page query must be a number")
 			.int("Page query must be an integer")
-			.min(1, "Page should be at least 1"),
+			.min(1, "Page should be at least 1")
+			.optional(),
 		limit: z
 			.coerce
 			.number("Limit query must be a number")
 			.int("Limit query must be an integer")
-			.min(1, "Limit should be at least 1"),
+			.min(1, "Limit should be at least 1")
+			.optional(),
 		search: z
 			.string("Search must be a string")
 			.optional()
@@ -29,6 +31,12 @@ const post = z
 			.min(3, "Category should be at least 3 characters")
 			.optional(),
 	})
+	.refine(
+		(data) => data.page && data.limit, 
+		{
+			message: "Page and limit must be provided together"
+		}
+	)
 	.refine(
 		(data) => !data.searchIn || !!data.search, // !!data.search always returns a boolean
 		{
