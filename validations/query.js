@@ -7,12 +7,12 @@ const pagination_search = {
 			.coerce
 			.number("Page query must be a number")
 			.int("Page query must be an integer")
-			.min(1, "Page should be at least 1")
+			.min(1, "Page should be at least 1"),
 		limit: z
 			.coerce
 			.number("Limit query must be a number")
 			.int("Limit query must be an integer")
-			.min(1, "Limit should be at least 1")
+			.min(1, "Limit should be at least 1"),
 		search: z
 			.string("Search must be a string")
 			.optional()
