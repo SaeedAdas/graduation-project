@@ -327,6 +327,12 @@ const remove_user_reaction = async (req, res) => {
 
 		return messages.deletedSuccessfully(res, "User Reaction deleted Successfully");
 	} catch (error) {
+		const handled = handlePrismaError(res, error, {
+			notFoundMessage: "Reaction not found"
+		});
+
+		if (handled) return handled;
+
 		console.error("Deleting reaction error: ", error);
 
 		return messages.serverError(res);

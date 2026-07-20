@@ -330,6 +330,12 @@ const remove_user_report = async (req, res) => {
 
 		return messages.deletedSuccessfully(res, "User Report deleted Successfully");
 	} catch (error) {
+		const handled = handlePrismaError(res, error, {
+			notFoundMessage: "Report not found"
+		});
+
+		if (handled) return handled;
+
 		console.error("Deleting report error: ", error);
 
 		return messages.serverError(res);
