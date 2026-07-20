@@ -134,6 +134,13 @@ router.get(
 );
 
 router.get(
+	"/post/:id/details", 
+	authenticate, 
+	validate({ params: parameterValidator.id }), 
+	postController.postDetails
+);
+
+router.get(
 	"/post/:id", 
 	authenticate, 
 	validate({ params: parameterValidator.id }), 

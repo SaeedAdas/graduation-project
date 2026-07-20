@@ -142,6 +142,73 @@ const retrieve = async (req, res) => {
 
 /**
  * @openapi
+ * /post/{id}:
+ *   get:
+ *     summary: Get a single post
+ *     description: Returns one post by its ID.
+ *     tags:
+ *       - Posts
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           example: 1
+ *         description: Post ID.
+ *     responses:
+ *       200:
+ *         description: Post loaded successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                   example: 1
+ *                 category:
+ *                   type: string
+ *                   example: News
+ *                 title:
+ *                   type: string
+ *                   example: My first post
+ *                 description:
+ *                   type: string
+ *                   nullable: true
+ *                   example: This is the post description
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Post not found
+ *       500:
+ *         description: Internal server error
+ */
+
+const postDetails = async (req, res) => {
+	try {
+		const post_id = req.params.id;
+		const user_id = req.user.id;
+
+		const { page, limit } = req.query;
+		
+		const posts = await postRepository.listPostWithDetails(post_id, page, limit, user_id)
+
+		return res.json(posts);
+
+	} catch (error) {
+		console.error("Retreiving post details error: ", error);
+
+		return messages.serverError(res);
+	}
+};
+
+/**
+ * @openapi
  * /posts:
  *   get:
  *     summary: Get multiple posts
@@ -510,6 +577,7 @@ module.exports = {
 	update,
 	remove,
 	listPosts,
-	userPosts
+	userPosts,
+	postDetails
 };
 
