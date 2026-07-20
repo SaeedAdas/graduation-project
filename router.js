@@ -142,6 +142,13 @@ router.get(
 	postController.retrieve
 );
 
+router.get(	
+	"/posts/user/:id", 
+	authenticate, 
+	validate({ params: parameterValidator.id, query: queryValidator.post }),
+	userController.userPosts
+);
+
 router.put(
 	"/post/:id", 
 	authenticate, 
@@ -159,6 +166,7 @@ router.delete(
 	authorize("posts", "remove"), 
 	postController.remove
 );
+
 
 router.post(
 	"/comment/:post_id", 

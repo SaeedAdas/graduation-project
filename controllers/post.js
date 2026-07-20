@@ -153,7 +153,7 @@ const retrieve = async (req, res) => {
  *     parameters:
  *       - in: query
  *         name: page
- *         required: false
+ *         required: true
  *         schema:
  *           type: integer
  *           minimum: 1
@@ -161,11 +161,10 @@ const retrieve = async (req, res) => {
  *         description: Page number. Use together with limit.
  *       - in: query
  *         name: limit
- *         required: false
+ *         required: true
  *         schema:
  *           type: integer
  *           minimum: 1
- *           maximum: 100
  *           example: 10
  *         description: Number of posts per page. Use together with page.
  *       - in: query
@@ -242,6 +241,123 @@ const listPosts = async (req, res) => {
 
 	} catch (error) {
 		console.error("Retreiving posts error: ", error);
+
+		return messages.serverError(res);
+	}
+};
+
+/**
+ * @openapi
+ * /posts/user/{id}:
+ *   get:
+ *     summary: Get multiple posts for specific user
+ *     description: Returns posts by user id with optional pagination, search, and category filtering.
+ *     tags:
+ *       - Posts
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           example: 1
+ *         description: User ID.
+ *       - in: query
+ *         name: page
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           example: 1
+ *         description: Page number. Use together with limit.
+ *       - in: query
+ *         name: limit
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           example: 10
+ *         description: Number of posts per page. Use together with page.
+ *       - in: query
+ *         name: search
+ *         required: false
+ *         schema:
+ *           type: string
+ *           example: laptop
+ *         description: Search term.
+ *       - in: query
+ *         name: searchIn
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum:
+ *             - title
+ *             - description
+ *           example: title
+ *         description: Field to search in. If omitted, both title and description are searched.
+ *       - in: query
+ *         name: category
+ *         required: false
+ *         schema:
+ *           type: String
+ *           example: Electronics
+ *         description: Category name.
+ *     responses:
+ *       200:
+ *         description: Posts retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   title:
+ *                     type: string
+ *                     example: Post title
+ *                   category:
+ *                     type: string
+ *                     example: Electronics
+ *                   description:
+ *                     type: string
+ *                     nullable: true
+ *                     example: Post description
+ *                   createdAt:
+ *                     type: string
+ *                     format: date-time
+ *                     example: "2026-06-24T10:00:00.000Z"
+ *                   commentsCount:
+ *                     type: number
+ *                     example: 3
+ *                   averageRating:
+ *                     type: float
+ *                     example: 4.2
+ *                   reactionsCount:
+ *                     type: number
+ *                     example: 3
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       500:
+ *         description: Internal server error
+ */
+
+const userPosts = async (req, res) => {
+	try {
+		const targetUserId = req.params.id;
+		const currentUserId = req.user.id;
+		
+		const condition = { userId: targetUserId };
+
+		const posts = await postRepository.listPostsWithStats({...req.query, currentUserId, condition});
+
+		return res.json(posts);
+
+	} catch (error) {
+		console.error("Retreiving targeted user posts error: ", error);
 
 		return messages.serverError(res);
 	}
@@ -393,6 +509,7 @@ module.exports = {
 	retrieve,
 	update,
 	remove,
-	listPosts
+	listPosts,
+	userPosts
 };
 
