@@ -133,6 +133,7 @@ const create = async (req, res) => {
  *       500:
  *         description: Internal server error
  */
+
 const retrieve = async (req, res) => {
 	try {
 		const report = req.data;

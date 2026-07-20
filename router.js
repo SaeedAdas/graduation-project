@@ -211,6 +211,15 @@ router.post(
 	reportController.create
 );
 
+console.log({
+    authenticate: typeof authenticate,
+    validate: typeof validate,
+    parameterValidatorId: typeof parameterValidator?.id,
+    loadReport: typeof loadReport,
+    authorize: typeof authorize,
+    reportRetrieve: typeof reportController?.retrieve
+});
+
 router.get(
 	"/report/:id", 
 	authenticate, 
