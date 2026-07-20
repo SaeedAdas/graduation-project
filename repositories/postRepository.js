@@ -12,7 +12,7 @@ const allowedPostsCondition = {
 }
 
 function formatOutput(rows, page, limit) {
-	const total = rows[0]?.total ? total : 0
+	const total = rows[0]?.total ?? 0;
 	const totalPages = Math.ceil(total / limit);
 	const formattedOutput = {
 		items: rows.map(({total, ...post}) => post),
