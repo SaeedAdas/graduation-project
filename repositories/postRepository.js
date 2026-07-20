@@ -159,7 +159,7 @@ const listPostsWithStats = async ({ page, limit, search, searchIn, category, cur
                         SELECT
                                 post_id,
                                 COUNT(*)::int AS count
-                        FROM reactions
+                        FROM reports
                         WHERE post_id IN (
                                 SELECT id FROM paginated_posts
                         )
