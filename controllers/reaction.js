@@ -316,12 +316,14 @@ const remove_user_reaction = async (req, res) => {
 		const user_id = req.user.id;
 		const post_id = req.params.post_id;
 
-		await prisma.reaction.delete({ 
-			where: { 
-				userId: user_id,
-				postId: post_id
-			} 
-		});
+		await prisma.reaction.delete({
+                        where: {
+                                userId_postId: {
+					userId: user_id,
+                                        postId: post_id
+                                }
+                        }
+                });
 
 		return messages.deletedSuccessfully(res, "User Reaction deleted Successfully");
 	} catch (error) {

@@ -319,12 +319,14 @@ const remove_user_report = async (req, res) => {
 		const post_id = req.params.post_id;
 		const user_id = req.user.id
 
-		await prisma.report.delete({ 
-			where: { 
-				postId: post_id,
-				userId: user_id
-			} 
-		});
+		await prisma.report.delete({
+                        where: {
+                                userId_postId: {
+					userId: user_id,
+                                        postId: post_id
+                                }
+                        }
+                });
 
 		return messages.deletedSuccessfully(res, "User Report deleted Successfully");
 	} catch (error) {
