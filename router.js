@@ -250,7 +250,7 @@ router.delete(
 	"/report/post/:post_id", 
 	authenticate, 
 	validate({ params: parameterValidator.post_id }), 
-	reactionController.remove_user_report
+	reportController.remove_user_report
 );
 
 router.post(
