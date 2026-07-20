@@ -202,66 +202,141 @@ const listPostsWithStats = async ({ page, limit, search, searchIn, category, cur
 	return formatOutput(rows, page, limit);
 };
 
-const listPostWithDetails = async (postId, page, limit, currentUserId) => {
+const listPostWithDetails = async (postId, page, limit, viewerId) => {
         const offset = (page - 1) * limit;
 
-	const post = await prisma.$queryRaw`
-		WITH paginated_comments AS (
-			SELECT
-				c.*,
-				COUNT(*)::int as count,
-				u.full_name
-			FROM comments c
-			INNER JOIN users u ON u.id = c.user_id
-			WHERE c.post_id = ${postId}
-			LIMIT ${limit}
-			OFFSET ${offset}
-			ORDER BY createdAt desc
-		),
+	const [postRows, comments] = await prisma.$transaction([
+                prisma.$queryRaw`
+                        WITH per_user_rating AS (
+                                SELECT
+                                        c.user_id,
+                                        AVG(c.rating) AS user_average
+                                FROM comments c
+                                WHERE c.post_id = ${postId}
+                                        AND c.rating IS NOT NULL
+                                GROUP BY c.user_id
+                        ),
 
-		user_average_rating AS (
-			SELECT
-            			user_id,
-            			AVG(rating)::numeric AS rating
-        		FROM comments
-			WHERE post_id = ${postId}
-                 	GROUP BY user_id
-		)
+                        post_stats AS (
+                                SELECT
+                                        (
+                                                SELECT COUNT(*)::int
+                                                FROM comments c
+                                                WHERE c.post_id = ${postId}
+                                        ) AS comments_count,
 
-		SELECT
-			p.*,
-			c.name,
-			COALESCE(pc.count, 0)::int AS "commentsCount",
-			COALESCE(ROUND(AVG(uar.rating)::numeric, 1), 0)::float AS "averageRating",
-			COALESCE(COUNT(reactions.id), 0)::int AS "reactionsCount",
-			COALESCE(COUNT(reports.id), 0)::int AS "reportsCount",
+                                        (
+                                                SELECT
+                                                        COALESCE(
+                                                                ROUND(
+                                                                        AVG(pur.user_average)::numeric,
+                                                                        1
+                                                                ),
+                                                                0
+                                                        )::float
+                                                FROM per_user_rating pur
+                                        ) AS average_rating,
 
-			EXISTS (
-				SELECT 1
-				FROM reactions current_reaction
-				WHERE current_reaction.post_id = p.id
-					AND current_reaction.user_id = ${currentUserId}
-			) AS "hasReacted",
+                                        (
+                                                SELECT COUNT(*)::int
+                                                FROM reactions r
+                                                WHERE r.post_id = ${postId}
+                                        ) AS reactions_count,
 
-			EXISTS (
-				SELECT 1
-				FROM reports current_report
-				WHERE current_report.post_id = p.id
-					AND current_report.user_id = ${currentUserId}
-			) AS "hasReported",
+                                        (
+                                                SELECT COUNT(*)::int
+                                                FROM reports rp
+                                                WHERE rp.post_id = ${postId}
+                                        ) AS reports_count
+                        )
 
-			pc.*
+                        SELECT
+                                p.id,
+                                p.user_id AS "userId",
+                                author.full_name,
+                                category.name,
+                                p.title,
+                                p.description,
+                                p.created_at,
 
-		FROM posts p
-		INNER JOIN categories c ON c.id = p.categoryId
-		LEFT JOIN paginated_comments pc ON pc.post_id = p.id
-		LEFT JOIN user_average_rating uar ON uar.user_id = p.user_id
-		LEFT JOIN reactions ON reactions.post_id = p.id
-		LEFT JOIN reports ON reports.post_id = p.id
-		WHERE p.id = ${postId}
-	`;
+                                stats.comments_count AS "commentsCount",
+                                stats.average_rating AS "averageRating",
+                                stats.reactions_count AS "reactionsCount",
+                                stats.reports_count AS "reportsCount",
 
-	return post;
+                                EXISTS (
+                                        SELECT 1
+                                        FROM reactions current_reaction
+                                        WHERE current_reaction.post_id = p.id
+                                                AND current_reaction.user_id = ${viewerId}
+                                ) AS "hasReacted",
+
+                                EXISTS (
+                                        SELECT 1
+                                        FROM reports current_report
+                                        WHERE current_report.post_id = p.id
+                                                AND current_report.user_id = ${viewerId}
+                                ) AS "hasReported"
+
+                        FROM posts p
+                        INNER JOIN users author
+                                ON author.id = p.user_id
+                        INNER JOIN categories category
+                                ON category.id = p.category_id
+                        CROSS JOIN post_stats stats
+                        WHERE p.id = ${postId}
+                `,
+
+                prisma.$queryRaw`
+                        SELECT
+                                c.id,
+                                c.user_id AS "userId",
+                                u.full_name,
+                                c.content,
+                                c.rating,
+                                c.created_at AS "createdAt"
+
+                        FROM comments c
+                        INNER JOIN users u
+                                ON u.id = c.user_id
+
+                        WHERE c.post_id = ${postId}
+
+                        ORDER BY
+                                c.created_at DESC NULLS LAST,
+                                c.id DESC
+
+                        LIMIT ${limit}
+                        OFFSET ${offset}
+                `
+        ]);
+
+        const post = postRows[0];
+
+        if (!post) {
+                return null;
+        }
+
+        const total = post.commentsCount;
+        const totalPages = Math.ceil(total / limit);
+
+        return {
+                ...post,
+
+                comments: {
+                        items: comments,
+
+                        pagination: {
+                                page: page,
+                                limit: limit,
+                                total,
+                                totalPages,
+                                hasNext: page < totalPages,
+                                hasPrevious:
+                                        page > 1 && totalPages > 0
+                        }
+                }
+	}
 };
 
 module.exports = {
