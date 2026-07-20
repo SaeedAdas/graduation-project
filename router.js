@@ -146,7 +146,7 @@ router.get(
 	"/posts/user/:id", 
 	authenticate, 
 	validate({ params: parameterValidator.id, query: queryValidator.post }),
-	userController.userPosts
+	postController.userPosts
 );
 
 router.put(
@@ -210,15 +210,6 @@ router.post(
 	authorize("reports", "create"), 
 	reportController.create
 );
-
-console.log({
-    authenticate: typeof authenticate,
-    validate: typeof validate,
-    parameterValidatorId: typeof parameterValidator?.id,
-    loadReport: typeof loadReport,
-    authorize: typeof authorize,
-    reportRetrieve: typeof reportController?.retrieve
-});
 
 router.get(
 	"/report/:id", 
