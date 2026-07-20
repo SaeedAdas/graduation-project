@@ -11,6 +11,24 @@ const allowedPostsCondition = {
 	userId: Prisma.sql`p.user_id`
 }
 
+function formatOutput(rows, page, limit) {
+	const total = rows[0]?.total ? total : 0
+	const totalPages = Math.ceil(total / limit);
+	const formattedOutput = {
+		items: rows.map(({total, ...post}) => post),
+		pagination: {
+			page,
+			limit,
+			total,
+			totalPages,
+			hasNext: page < totalPages,
+			hasPrevious: page > 1
+		}
+	}
+
+	return formattedOutput;
+}
+
 function buildConditionFilter(conditions) {
 	if (!conditions || Object.keys(conditions).length == 0) {
 		return Prisma.empty;
@@ -78,11 +96,12 @@ const listPostsWithStats = async ({ page, limit, search, searchIn, category, cur
                      	OFFSET ${skip}
            	` : Prisma.empty;
 
-    	const posts = await prisma.$queryRaw`
+    	const rows = await prisma.$queryRaw`
           	WITH filtered_posts AS (
                      	SELECT
                         	p.id,
                                 p.title,
+				p.user_id,
                                 u.full_name,
                                 c.name,
                                 p.description,
@@ -116,7 +135,7 @@ const listPostsWithStats = async ({ page, limit, search, searchIn, category, cur
                 comments_stats AS (
                         SELECT
                                 post_id,
-                                SUM(comments_count) AS comments_count,
+                                SUM(comments_count) AS count,
                                 ROUND(AVG(user_average_rating)::numeric, 1)::float AS average_rating
                         FROM user_average_rating
                         WHERE post_id IN (
@@ -128,7 +147,18 @@ const listPostsWithStats = async ({ page, limit, search, searchIn, category, cur
                 reactions_stats AS (
                         SELECT
                                 post_id,
-                                COUNT(*)::int AS reactions_count
+                                COUNT(*)::int AS count
+                        FROM reactions
+                        WHERE post_id IN (
+                                SELECT id FROM paginated_posts
+                        )
+                        GROUP BY post_id
+                ),
+
+                reports_stats AS (
+                        SELECT
+                                post_id,
+                                COUNT(*)::int AS count
                         FROM reactions
                         WHERE post_id IN (
                                 SELECT id FROM paginated_posts
@@ -138,9 +168,15 @@ const listPostsWithStats = async ({ page, limit, search, searchIn, category, cur
 
                 SELECT
                         pp.*,
-                        COALESCE(cm.comments_count, 0)::int AS "commentsCount",
-                        COALESCE(cm.average_rating, 0)::float AS "averageRating",
-                        COALESCE(r.reactions_count, 0)::int AS "reactionsCount",
+                        COALESCE(comments.count, 0)::int AS "commentsCount",
+                        COALESCE(comments.average_rating, 0)::float AS "averageRating",
+                        COALESCE(reactions.count, 0)::int AS "reactionsCount",
+                        COALESCE(reports.count, 0)::int AS "reportsCount",
+
+			(
+				SELECT COUNT(*)::int
+				FROM filtered_posts
+			) AS "total",
 
 			EXISTS (
 				SELECT 1
@@ -157,14 +193,78 @@ const listPostsWithStats = async ({ page, limit, search, searchIn, category, cur
 			) AS "hasReported"
 		
                 FROM paginated_posts pp
-                LEFT JOIN comments_stats cm ON cm.post_id = pp.id
-                LEFT JOIN reactions_stats r ON r.post_id = pp.id
+                LEFT JOIN comments_stats comments ON comments.post_id = pp.id
+                LEFT JOIN reactions_stats reactions ON reactions.post_id = pp.id
+                LEFT JOIN reports_stats reports ON reports.post_id = pp.id
 
                 `;
 
-	return posts;
+	return formatOutput(rows, page, limit);
+};
+
+const listPostWithDetails = async (postId, page, limit, currentUserId) => {
+        const offset = (page - 1) * limit;
+
+	const post = await prisma.$queryRaw`
+		WITH paginated_comments AS (
+			SELECT
+				c.*,
+				COUNT(*)::int as count,
+				u.full_name
+			FROM comments c
+			INNER JOIN users u ON u.id = c.user_id
+			WHERE c.post_id = ${postId}
+			LIMIT ${limit}
+			OFFSET ${offset}
+			ORDER BY createdAt desc
+		),
+
+		user_average_rating AS (
+			SELECT
+            			user_id,
+            			AVG(rating)::numeric AS rating
+        		FROM comments
+			WHERE post_id = ${postId}
+                 	GROUP BY user_id
+		)
+
+		SELECT
+			p.*,
+			c.name,
+			COALESCE(pc.count, 0)::int AS "commentsCount",
+			COALESCE(ROUND(AVG(uar.rating)::numeric, 1), 0)::float AS "averageRating",
+			COALESCE(COUNT(reactions.id), 0)::int AS "reactionsCount",
+			COALESCE(COUNT(reports.id), 0)::int AS "reportsCount",
+
+			EXISTS (
+				SELECT 1
+				FROM reactions current_reaction
+				WHERE current_reaction.post_id = p.id
+					AND current_reaction.user_id = ${currentUserId}
+			) AS "hasReacted",
+
+			EXISTS (
+				SELECT 1
+				FROM reports current_report
+				WHERE current_report.post_id = p.id
+					AND current_report.user_id = ${currentUserId}
+			) AS "hasReported",
+
+			pc.*
+
+		FROM posts p
+		INNER JOIN categories c ON c.id = p.categoryId
+		LEFT JOIN paginated_comments pc ON pc.post_id = p.id
+		LEFT JOIN user_average_rating uar ON uar.user_id = p.user_id
+		LEFT JOIN reactions ON reactions.post_id = p.id
+		LEFT JOIN reports ON reports.post_id = p.id
+		WHERE p.id = ${postId}
+	`;
+
+	return post;
 };
 
 module.exports = {
-        listPostsWithStats
+        listPostsWithStats,
+	listPostWithDetails
 };
