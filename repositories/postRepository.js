@@ -118,7 +118,9 @@ const listPostsWithStats = async ({ page, limit, search, searchIn, category, cur
                 paginated_posts AS (
                         SELECT *
                         FROM filtered_posts fp
-                        ORDER BY created_at DESC, id DESC
+			ORDER BY
+                		fp.created_at DESC NULLS LAST,
+                		fp.id DESC
                         ${paginationClause}
                 ),
 
@@ -196,7 +198,9 @@ const listPostsWithStats = async ({ page, limit, search, searchIn, category, cur
                 LEFT JOIN comments_stats comments ON comments.post_id = pp.id
                 LEFT JOIN reactions_stats reactions ON reactions.post_id = pp.id
                 LEFT JOIN reports_stats reports ON reports.post_id = pp.id
-
+		ORDER BY
+        		pp.created_at DESC NULLS LAST,
+        		pp.id DESC
                 `;
 
 	return formatOutput(rows, page, limit);
