@@ -490,6 +490,7 @@ module.exports = {
 	retrieve,
 	update,
 	remove,
-	get_all
+	get_all,
+	remove_user_report
 };
 
