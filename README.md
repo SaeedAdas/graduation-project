@@ -1,1544 +1,324 @@
 # Graduation Project Backend API
 
-A secure, production-ready REST API built for the graduation project backend using **Node.js**, **Express.js**, **Prisma ORM**, and **PostgreSQL**.
+REST API for the graduation project, built with Node.js, Express, Prisma, and PostgreSQL. It provides session-based authentication, session-bound CSRF protection, role- and ownership-based authorization, validation, Swagger/OpenAPI documentation, and CRUD operations for users, posts, comments, reports, reactions, and categories.
 
-This backend does more than expose CRUD routes. It includes a complete request pipeline with session authentication, CSRF protection, ABAC authorization, Zod validation, Prisma database access, PostgreSQL-backed sessions, resource ownership checks, and Swagger/OpenAPI documentation.
+## Contents
 
----
+- [Technology stack](#technology-stack)
+- [Features](#features)
+- [Architecture](#architecture)
+- [Getting started](#getting-started)
+- [Environment variables](#environment-variables)
+- [Database](#database)
+- [Authentication and CSRF](#authentication-and-csrf)
+- [API routes](#api-routes)
+- [Query parameters](#query-parameters)
+- [Authorization](#authorization)
+- [npm scripts](#npm-scripts)
+- [Deployment notes](#deployment-notes)
+- [Current implementation notes](#current-implementation-notes)
 
-## Table of Contents
+## Technology stack
 
-- [Project Overview](#project-overview)
-- [Tech Stack](#tech-stack)
-- [Main Features](#main-features)
-- [Project Structure](#project-structure)
-- [Environment Variables](#environment-variables)
-- [Local Setup](#local-setup)
-- [Database Setup](#database-setup)
-- [Running the Project](#running-the-project)
-- [Render Deployment](#render-deployment)
-- [How Everything Is Connected Together](#how-everything-is-connected-together)
-- [Authentication Flow](#authentication-flow)
-- [CSRF Protection Flow](#csrf-protection-flow)
-- [Authorization Model: ABAC](#authorization-model-abac)
-- [Middleware Pipeline](#middleware-pipeline)
-- [Database Schema](#database-schema)
-- [Swagger / OpenAPI Documentation](#swagger--openapi-documentation)
-- [Swagger Model Schemas](#swagger-model-schemas)
-- [API Routes](#api-routes)
-- [Validation Rules](#validation-rules)
-- [Response Handling](#response-handling)
-- [Security Notes](#security-notes)
-- [Useful npm Scripts](#useful-npm-scripts)
-- [Future Improvements](#future-improvements)
-
----
-
-## Project Overview
-
-This backend is the API layer for the graduation project. It follows a layered architecture where each part has a clear job:
-
-1. **Server layer** configures Express, CORS, JSON parsing, sessions, cookies, CSRF protection, and routing.
-2. **Router layer** defines all API endpoints and attaches the required middleware chain.
-3. **Middleware layer** handles authentication, authorization, validation, CSRF protection, and resource loading.
-4. **Controller layer** contains the business logic for users, posts, comments, reactions, and reports.
-5. **Database layer** uses Prisma Client to communicate with PostgreSQL.
-6. **Permission layer** centralizes access-control policies using ABAC-style rules.
-7. **Documentation layer** exposes Swagger UI with endpoint documentation and reusable model schemas.
-
-The result is a backend that is structured, secure, and ready to be connected to a frontend application.
-
----
-
-## Tech Stack
-
-| Category | Technology |
-|---|---|
-| Runtime | Node.js `>=18` |
-| Framework | Express.js |
+| Area | Technology |
+| --- | --- |
+| Runtime | Node.js 18 or newer, CommonJS modules |
+| HTTP framework | Express 4 |
 | Database | PostgreSQL |
-| ORM | Prisma ORM |
-| Session Management | express-session |
-| Session Store | connect-pg-simple |
-| Validation | Zod |
-| Password Hashing | bcryptjs |
-| CSRF Protection | csrf-csrf |
-| Cookies | cookie-parser |
-| CORS | cors |
-| API Documentation | swagger-jsdoc + swagger-ui-express |
-| Deployment Target | Render |
-| Package Manager | npm |
+| ORM and schema | Prisma 6.19 |
+| Sessions | `express-session`, `connect-pg-simple`, and PostgreSQL |
+| Validation | Zod 4 |
+| Authentication | Server-side sessions and `bcryptjs` password hashing |
+| Authorization | Local policy engine with roles and resource ownership checks |
+| CSRF protection | Custom session-bound token using Node's `crypto` module |
+| API documentation | OpenAPI 3, `swagger-jsdoc`, and Swagger UI |
+| Database queries | Prisma Client plus parameterized raw SQL for post feeds and statistics |
+| Other HTTP concerns | CORS and JSON request parsing |
 
----
+`@upstash/redis`, `csrf-csrf`, `cookie-parser`, and `dotenv` are installed dependencies, but they are not part of the active Express request pipeline. See [Current implementation notes](#current-implementation-notes).
 
-## Main Features
+## Features
 
-### 1. User Authentication
+- User registration, login, logout, private profiles, and public profiles.
+- Administrative user creation, listing, updating, disabling, and deletion.
+- Posts organized by category, with filtering, search, pagination, and aggregate statistics.
+- Paginated post details with comments, ratings, reaction/report counts, and viewer-specific state.
+- Comments with optional ratings from 0 to 5.
+- One reaction and one report per user/post pair, enforced by database constraints.
+- Category management and post counts per category.
+- PostgreSQL-backed sessions with a seven-day absolute lifetime.
+- Zod validation for bodies, URL parameters, and query parameters.
+- Admin-only interactive Swagger documentation.
 
-The backend uses **server-side session authentication**.
+## Architecture
 
-Implemented authentication features:
-
-- User registration.
-- User login.
-- Password hashing with `bcryptjs`.
-- Session regeneration after login to reduce session fixation risk.
-- Storing authenticated user data in the server-side session.
-- Database-backed session storage using PostgreSQL.
-- Logout by destroying the session.
-- Clearing both the `sid` session cookie and CSRF cookie on logout.
-- Authenticated profile endpoint.
-
-Main files:
+Requests flow through the router and its middleware before reaching controllers and the database:
 
 ```text
-controllers/user.js
-middlewares/authenticate.js
-server.js
+HTTP request
+  -> global CORS / JSON / session / CSRF middleware
+  -> route-specific authentication and validation
+  -> optional resource loader
+  -> policy authorization
+  -> controller
+  -> repository or Prisma Client
+  -> PostgreSQL
 ```
-
----
-
-### 2. Session Management
-
-The project uses `express-session` with `connect-pg-simple` to store sessions in PostgreSQL.
-
-Current session configuration includes:
-
-- Cookie name: `sid`
-- HTTP-only cookie.
-- Secure cookie.
-- SameSite cookie protection.
-- 7-day cookie lifetime.
-- PostgreSQL session table.
-- Automatic session table creation using `createTableIfMissing: true`.
-
-Main file:
-
-```text
-server.js
-```
-
----
-
-### 3. CSRF Protection
-
-The API uses the `csrf-csrf` package with a double-submit CSRF pattern.
-
-Implemented CSRF features:
-
-- CSRF token generation.
-- Signed CSRF cookie storage.
-- CSRF token validation through the `x-csrf-token` request header.
-- CSRF token binding to the current session ID.
-- Safe methods ignored: `GET`, `HEAD`, and `OPTIONS`.
-- Global CSRF protection before application routes.
-- `/csrf-token` endpoint for token generation.
-- CSRF token returned after successful login.
-- Swagger request interceptor that automatically fetches and sends CSRF tokens for unsafe requests.
-
-Main files:
-
-```text
-middlewares/csrf.js
-server.js
-config/swagger.js
-controllers/user.js
-```
-
----
-
-### 4. Authorization
-
-The project uses **Attribute-Based Access Control (ABAC)**.
-
-This is not pure RBAC because the access decision does not depend only on the user role. The permission engine also checks attributes such as:
-
-- The current user's `id`.
-- The current user's `role`.
-- The requested resource type.
-- The requested action.
-- The loaded database resource.
-- The resource owner, such as `post.userId`, `comment.userId`, `report.userId`, and `reaction.userId`.
-
-So, the role is treated as one subject attribute inside a broader ABAC decision.
-
-Example:
-
-```js
-update: (user, post) => user.id == post.userId
-```
-
-This rule means a regular user can update a post only when the post belongs to them.
-
-Main files:
-
-```text
-permissions/roles.js
-permissions/engine.js
-middlewares/authorize.js
-middlewares/loadResources.js
-```
-
----
-
-### 5. Resource Loading
-
-Before retrieving, updating, or deleting a resource, the backend loads it from the database.
-
-Resource loaders:
-
-```text
-loadPost
-loadComment
-loadReport
-loadReaction
-```
-
-Resource loading is important because ABAC needs the actual database object to make ownership decisions.
-
-Example update flow:
-
-```text
-PUT /post/:id
-→ authenticate
-→ validate request
-→ loadPost
-→ authorize("posts", "update")
-→ postController.update
-```
-
----
-
-### 6. Request Validation
-
-The project uses Zod to validate request bodies and route parameters.
-
-Validation is implemented for:
-
-- User registration.
-- User login.
-- Post creation and update.
-- Comment creation and update.
-- Report creation and update.
-- Reaction creation and update.
-- Route parameter validation.
-
-Main files:
-
-```text
-validations/user.js
-validations/post.js
-validations/comment.js
-validations/report.js
-validations/reaction.js
-middlewares/validate.js
-```
-
-The `validate` middleware also converts valid numeric route parameters from strings to numbers.
-
----
-
-### 7. Swagger API Documentation
-
-Swagger is integrated using:
-
-```text
-swagger-jsdoc
-swagger-ui-express
-```
-
-Swagger reads OpenAPI comments from:
-
-```text
-controllers/*.js
-```
-
-Swagger UI is served from:
-
-```text
-/api-docs
-```
-
-Access to Swagger is protected using the same ABAC authorization system:
-
-```text
-authenticate → authorize("api", "view")
-```
-
-In the current policy, Admin users can view the API documentation and regular users cannot.
-
----
-
-## Project Structure
 
 ```text
 .
-├── config
-│   ├── connection.js        # Prisma client instance
-│   └── swagger.js           # Swagger/OpenAPI configuration
-│
-├── controllers
-│   ├── comment.js           # Comment CRUD logic
-│   ├── post.js              # Post CRUD logic
-│   ├── reaction.js          # Reaction CRUD/upsert logic
-│   ├── report.js            # Report CRUD/upsert logic
-│   └── user.js              # Auth, register, profile, logout
-│
-├── helper
-│   └── messages.js          # Central response helpers
-│
-├── middlewares
-│   ├── authenticate.js      # Session authentication
-│   ├── authorize.js         # ABAC permission checking
-│   ├── csrf.js              # CSRF configuration
-│   ├── loadResources.js     # DB resource loading before authorization
-│   └── validate.js          # Zod and route parameter validation
-│
-├── permissions
-│   ├── engine.js            # Permission evaluation engine
-│   └── roles.js             # Access policy rules and ownership conditions
-│
-├── prisma
-│   └── schema.prisma        # Prisma schema and database models
-│
-├── validations
-│   ├── comment.js
-│   ├── post.js
-│   ├── reaction.js
-│   ├── report.js
-│   └── user.js
-│
-├── router.js                # API routes and route-level middleware chain
-├── server.js                # Express app setup
-├── package.json
-└── README.md
+|-- config/
+|   |-- connection.js       # Shared Prisma Client
+|   |-- redis.js            # Upstash client scaffold
+|   `-- swagger.js          # OpenAPI schemas and Swagger UI options
+|-- controllers/            # HTTP handlers and OpenAPI route annotations
+|-- helper/                 # Response helpers and Prisma error mapping
+|-- middlewares/            # Authentication, CSRF, validation, loaders, policies
+|-- permissions/
+|   |-- policies.js         # Admin/User permissions and ownership rules
+|   `-- policyEngine.js     # Policy lookup and evaluation
+|-- prisma/
+|   `-- schema.prisma       # PostgreSQL schema
+|-- repositories/
+|   `-- postRepository.js   # Feed/detail queries and aggregate statistics
+|-- validations/            # Zod schemas
+|-- router.js               # Route definitions and middleware chains
+|-- server.js               # Express and session configuration
+`-- package.json
 ```
 
----
+## Getting started
 
-## Environment Variables
+### Prerequisites
 
-Create a `.env` file in the project root.
+- Node.js 18 or newer
+- npm
+- A PostgreSQL database
 
-```env
+### Install and run locally
+
+1. Install the dependencies:
+
+   ```bash
+   npm install
+   ```
+
+2. Create a `.env` file using the values in [Environment variables](#environment-variables). Do not commit this file. The current `.gitignore` does not exclude `.env`, so add it to a local/global Git ignore before storing secrets there.
+
+3. Create/synchronize the application tables, including the `session` table:
+
+   ```bash
+   npm run db:push
+   ```
+
+4. Start the API while preloading the installed `dotenv` package:
+
+   ```bash
+   node -r dotenv/config server.js
+   ```
+
+The default local URL is `http://localhost:5000`.
+
+`npm start` runs `node server.js`. Use it when the environment variables are already provided by your shell or hosting platform. The application does not currently call `dotenv.config()` itself.
+
+## Environment variables
+
+```dotenv
+DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/DATABASE?schema=public
+SESSION_SECRET=replace-with-a-long-random-secret
+FRONTEND_URL=http://localhost:5173
 NODE_ENV=development
 PORT=5000
-
-DATABASE_URL="postgresql://USER:PASSWORD@HOST:PORT/DATABASE?schema=public"
-
-SESSION_SECRET="replace-with-a-long-random-secret"
-CSRF_SECRET="replace-with-another-long-random-secret"
-
-FRONTEND_URL="http://localhost:3000"
 ```
 
-| Variable | Required | Description |
-|---|---:|---|
-| `NODE_ENV` | Yes | Use `development` locally and `production` on Render. |
-| `PORT` | No | Local server port. Render provides this automatically in production. |
-| `DATABASE_URL` | Yes | PostgreSQL connection string used by Prisma and the session store. |
-| `SESSION_SECRET` | Yes | Secret used to sign the session ID cookie. |
-| `CSRF_SECRET` | Yes | Secret used by the CSRF token generator. |
-| `FRONTEND_URL` | Yes | Allowed frontend origin for CORS. |
-
-Never commit `.env` files to GitHub.
-
----
-
-## Local Setup
-
-### 1. Clone the repository
-
-```bash
-git clone https://github.com/SaeedAdas/graduation-project/tree/backend
-cd ~/projects/backend
-```
-
-### 2. Install dependencies
-
-```bash
-npm install
-```
-
-### 3. Create the environment file
-
-```bash
-cp .env.example .env
-```
-
-If `.env.example` does not exist yet, create `.env` manually using the variables listed above.
-
-### 4. Generate Prisma Client
-
-```bash
-npx prisma generate
-```
-
-This is also handled by:
-
-```bash
-npm run build
-```
-
-and by the `postinstall` script.
-
-### 5. Sync the database schema
-
-For development:
-
-```bash
-npm run db:push
-```
-
-or:
-
-```bash
-npx prisma db push
-```
-
-For a migration-based workflow:
-
-```bash
-npx prisma migrate dev --name init
-```
-
-Then commit the generated `prisma/migrations` folder.
-
----
-
-## Database Setup
-
-The project uses PostgreSQL.
-
-You can use:
-
-- Local PostgreSQL.
-- Neon PostgreSQL.
-- Render PostgreSQL.
-- Supabase PostgreSQL.
-
-After setting `DATABASE_URL`, run:
-
-```bash
-npm run db:push
-```
-
-To inspect the database visually during development:
-
-```bash
-npm run prisma:studio
-```
-
-Prisma Studio usually opens on:
-
-```text
-http://localhost:5555
-```
-
----
-
-## Running the Project
-
-Start the server:
-
-```bash
-npm start
-```
-
-By default, the server runs on:
-
-```text
-http://localhost:5000
-```
-
-If `PORT` is set in `.env`, the server uses that value.
-
----
-
-## Render Deployment
-
-This project can be deployed as a Render Web Service.
-
-### 1. Push the project to GitHub
-
-```bash
-git add .
-git commit -m "Prepare backend for deployment"
-git push
-```
-
-### 2. Create or connect a PostgreSQL database
-
-Use Render PostgreSQL, Neon, Supabase, or any PostgreSQL provider.
-
-Copy the connection string and save it as:
-
-```env
-DATABASE_URL="your-production-postgresql-url"
-```
-
-### 3. Create a new Render Web Service
-
-Recommended settings:
-
-| Setting | Value |
-|---|---|
-| Runtime | Node |
-| Build Command | `npm install --production=false && npm run build` |
-| Start Command | `npm start` |
-| Pre-Deploy Command | `npm run db:deploy` |
-| Node Version | `>=18` |
-
-The start command runs:
-
-```bash
-node server.js
-```
-
-because `package.json` contains:
-
-```json
-"start": "node server.js"
-```
-
-### 4. Add environment variables on Render
-
-```env
-NODE_ENV=production
-DATABASE_URL=your-production-postgresql-url
-SESSION_SECRET=your-production-session-secret
-CSRF_SECRET=your-production-csrf-secret
-FRONTEND_URL=https://your-frontend-domain.com
-```
-
-Do not add quotes in the Render dashboard unless Render explicitly expects them.
-
-### 5. Production Prisma migrations
-
-Recommended production flow:
-
-```bash
-npx prisma migrate dev --name migration-name
-git add prisma/migrations
-git commit -m "Add database migration"
-git push
-```
-
-On Render, set the Pre-Deploy Command to:
-
-```bash
-npm run db:deploy
-```
-
-This runs:
-
-```bash
-prisma migrate deploy
-```
-
-before the server starts.
-
-If the project does not yet include a `prisma/migrations` folder, `npm run db:push` can be used during early development. For real production deployments, migrations are safer.
-
-### 6. Production cookies and HTTPS
-
-The project uses secure cookies. This works correctly on Render because Render provides HTTPS.
-
-Current cookie behavior:
-
-- Session cookie is secure.
-- CSRF cookie is secure.
-- Cookies are HTTP-only.
-- Session max age is 7 days.
-- CSRF max age is 7 days.
-
-For local HTTP testing, browsers may refuse to store secure cookies. Use local HTTPS or temporarily adjust cookie `secure` settings during development only.
-
----
-
-## How Everything Is Connected Together
-
-The request lifecycle looks like this:
-
-```text
-Client / Frontend
-    ↓
-Express server.js
-    ↓
-CORS + JSON parser
-    ↓
-Session middleware
-    ↓
-Cookie parser
-    ↓
-/csrf-token route if token is requested
-    ↓
-Global CSRF protection
-    ↓
-router.js
-    ↓
-Route-level middleware chain
-    ↓
-Controller
-    ↓
-Prisma Client
-    ↓
-PostgreSQL
-    ↓
-Response helper
-    ↓
-Client / Frontend
-```
-
-Example protected request:
-
-```text
-PUT /post/5
-    ↓
-Browser sends sid session cookie
-    ↓
-Frontend sends x-csrf-token header
-    ↓
-CSRF middleware validates token against the session
-    ↓
-authenticate middleware loads the current user from DB
-    ↓
-validate middleware validates params and body
-    ↓
-loadPost middleware loads post 5 from DB
-    ↓
-authorize middleware checks ABAC policy
-    ↓
-controller updates the post using Prisma
-    ↓
-response is returned
-```
-
-Each layer does one job. That is the point: less chaos, fewer bugs, and a backend that is easier to maintain.
-
----
-
-## Authentication Flow
-
-### Register
-
-Endpoint:
-
-```http
-POST /user/register
-```
-
-Flow:
-
-```text
-Request body
-    ↓
-Zod validation
-    ↓
-Check if email already exists
-    ↓
-Hash password using bcrypt
-    ↓
-Create user with Prisma
-    ↓
-Return success response
-```
-
-Request body:
-
-```json
-{
-  "full_name": "Ahmad Ali",
-  "email": "user@example.com",
-  "password": "StrongPassword123"
-}
-```
-
----
-
-### Login
-
-Endpoint:
-
-```http
-POST /auth/login
-```
-
-Flow:
-
-```text
-Request body
-    ↓
-Zod validation
-    ↓
-Find user by email
-    ↓
-Compare password using bcrypt
-    ↓
-Regenerate session
-    ↓
-Store user_id, email, and role in session
-    ↓
-Generate CSRF token
-    ↓
-Return login response + CSRF token
-```
-
-Successful response:
-
-```json
-{
-  "message": "Login Successful",
-  "csrfToken": "generated-csrf-token"
-}
-```
-
----
-
-### Authenticated Requests
-
-Protected endpoints use:
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `DATABASE_URL` | Yes | Used by Prisma and the PostgreSQL session pool. |
+| `SESSION_SECRET` | Yes | Signs the Express session ID cookie. |
+| `FRONTEND_URL` | Yes | Exact origin allowed by CORS; credentials are enabled. |
+| `NODE_ENV` | Recommended | In `production`, database SSL and secure session cookies are enabled. |
+| `PORT` | No | HTTP port; defaults to `5000`. |
+| `REDIS_URL` | No | Only needed if the unregistered Upstash rate limiter is activated. |
+| `REDIS_TOKEN` | No | Only needed if the unregistered Upstash rate limiter is activated. |
+
+## Database
+
+Prisma reads `DATABASE_URL` from the environment. The current repository contains a schema but no migration history, so local setup uses `prisma db push` through `npm run db:push`.
+
+| Model | Purpose and important relationships |
+| --- | --- |
+| `User` | Unique email and optional phone; `Admin` or `User`; `Active` or `Inactive`; owns posts, comments, reports, and reactions. |
+| `Post` | Belongs to a user and category; owns comments, reports, and reactions. |
+| `Comment` | Belongs to a user and post; can include a numeric rating. |
+| `Report` | Belongs to a user and post; unique on `(userId, postId)`. |
+| `Reaction` | Belongs to a user and post; unique on `(userId, postId)`. |
+| `Category` | Has a unique name and many posts. Category deletion is restricted while posts reference it. |
+| `Session` | Stores `connect-pg-simple` session JSON and expiration timestamps. |
+
+Deleting a user or post cascades to its dependent records. The session store is configured with `createTableIfMissing: false`, so the `session` table must exist before the server handles sessions; `npm run db:push` creates it from the Prisma schema.
+
+## Authentication and CSRF
+
+Authentication is stored server-side in PostgreSQL. The browser receives an HTTP-only `sid` cookie. In production the cookie is marked `Secure`; `SameSite` is `lax`. The persistent lifetime is seven days, while a login with `rememberMe: false` changes it to a browser-session cookie.
+
+Every unsafe method (`POST`, `PUT`, `PATCH`, and `DELETE`) is protected globally, including registration and login:
+
+1. Send `GET /csrf-token` with credentials enabled. This creates a session if needed and returns `{ "csrfToken": "..." }`.
+2. Send the token in the `x-csrf-token` header on the unsafe request, using the same `sid` cookie.
+3. A successful login regenerates the session and returns a newly rotated CSRF token. Use that returned token for later unsafe requests.
+4. Continue sending cookies by using `credentials: "include"` in browser requests.
+
+Example login flow:
 
 ```js
-authenticate
-```
+const tokenResponse = await fetch("http://localhost:5000/csrf-token", {
+  credentials: "include",
+});
+const { csrfToken } = await tokenResponse.json();
 
-The middleware checks:
-
-1. Does the session contain `user_id`?
-2. Does this user still exist in the database?
-3. If yes, attach the user record to `req.user`.
-
-This means if a user is deleted from the database after logging in, their old session no longer grants access.
-
----
-
-### Logout
-
-Endpoint:
-
-```http
-POST /auth/logout
-```
-
-Flow:
-
-```text
-Destroy session
-    ↓
-Clear sid cookie
-    ↓
-Clear CSRF cookie
-    ↓
-Return logout response
-```
-
-Response:
-
-```json
-{
-  "message": "Logged out successfully"
-}
-```
-
----
-
-## CSRF Protection Flow
-
-The backend protects unsafe HTTP methods:
-
-```text
-POST
-PUT
-PATCH
-DELETE
-```
-
-Safe methods are ignored:
-
-```text
-GET
-HEAD
-OPTIONS
-```
-
-### CSRF Token Endpoint
-
-Endpoint:
-
-```http
-GET /csrf-token
-```
-
-What it does:
-
-1. Forces session initialization.
-2. Saves the session.
-3. Generates a CSRF token.
-4. Sends the CSRF token in the response.
-5. Stores the signed CSRF token in an HTTP-only cookie.
-
-Response:
-
-```json
-{
-  "csrfToken": "generated-token"
-}
-```
-
-### Sending Unsafe Requests
-
-For unsafe requests, the frontend must send:
-
-1. The session cookie through browser credentials.
-2. The CSRF token in the request header.
-
-```http
-x-csrf-token: generated-token
-```
-
-Example:
-
-```js
-await fetch("/api/post", {
+const loginResponse = await fetch("http://localhost:5000/auth/login", {
   method: "POST",
   credentials: "include",
   headers: {
-    "Content-Type": "application/json",
-    "x-csrf-token": csrfToken
+    "content-type": "application/json",
+    "x-csrf-token": csrfToken,
   },
   body: JSON.stringify({
-    category: "News",
-    title: "My first post",
-    description: "This is the post description"
-  })
+    email: "user@example.com",
+    password: "Example!123",
+    rememberMe: true,
+  }),
 });
+
+const { csrfToken: authenticatedCsrfToken } = await loginResponse.json();
 ```
 
----
-
-## Authorization Model: ABAC
-
-The authorization system is **Attribute-Based Access Control (ABAC)**.
-
-The project still has `Admin` and `User`, but those roles are not the whole access model. They are attributes used by the permission engine.
-
-The access decision is based on this tuple:
-
-```text
-subject + resource + action + resource data
-```
-
-| Part | Example |
-|---|---|
-| Subject attributes | `user.id`, `user.role` |
-| Resource | `posts`, `comments`, `reports`, `reactions`, `users`, `api` |
-| Action | `view`, `create`, `update`, `remove` |
-| Resource attributes | `post.userId`, `comment.userId`, `report.userId`, `reaction.userId` |
-
-### Permission Engine
-
-File:
-
-```text
-permissions/engine.js
-```
-
-The engine receives:
-
-```js
-hasPermission(subject, resource, action, data)
-```
-
-| Parameter | Meaning |
-|---|---|
-| `subject` | The current authenticated user. |
-| `resource` | The resource being accessed. |
-| `action` | The requested action. |
-| `data` | The loaded database resource used for ownership checks. |
-
-### Policy File
-
-File:
-
-```text
-permissions/roles.js
-```
-
-Despite the file name, this file acts as the access policy map. It includes both simple role permissions and attribute-based ownership rules.
-
-### Admin Policy
-
-Admin can:
-
-- View, create, update, and remove posts.
-- View, create, update, and remove comments.
-- View, create, update, and remove reactions.
-- View, create, update, and remove reports.
-- View, create, update, and remove users.
-- View Swagger API documentation.
-
-### User Policy
-
-User can:
-
-- View posts.
-- Create posts.
-- Update/remove only their own posts.
-- View comments.
-- Create comments.
-- Update/remove only their own comments.
-- Create reactions.
-- Update/remove only their own reactions.
-- Create reports.
-- View/update/remove only their own reports.
-- View/update/remove only their own user data.
-- Cannot view API documentation.
-
-Example ABAC ownership rules:
-
-```js
-update: (user, post) => user.id == post.userId
-remove: (user, comment) => user.id == comment.userId
-view: (user, report) => user.id == report.userId
-```
-
-A regular user is not allowed just because they are a `User`. They are allowed only when their attributes match the resource attributes. That is the ABAC part.
-
----
-
-## Middleware Pipeline
-
-### Global Middlewares
-
-Defined in `server.js`:
-
-| Middleware | Purpose |
-|---|---|
-| `cors` | Allows requests from the configured frontend origin. |
-| `express.json()` | Parses JSON request bodies. |
-| `express-session` | Creates and reads server-side sessions. |
-| `cookieParser()` | Parses cookies. |
-| `/csrf-token` route | Generates CSRF tokens. |
-| `doubleCsrfProtection` | Protects unsafe requests from CSRF attacks. |
-| `router` | Mounts all application routes. |
-
-### Route-Level Middlewares
-
-Defined in `router.js`:
-
-| Middleware | Purpose |
-|---|---|
-| `authenticate` | Ensures the user is logged in and loads the user from DB. |
-| `validate` | Validates route params and request body. |
-| `loadPost` | Loads a post from DB and attaches it to `req.data`. |
-| `loadComment` | Loads a comment from DB and attaches it to `req.data`. |
-| `loadReport` | Loads a report from DB and attaches it to `req.data`. |
-| `loadReaction` | Loads a reaction from DB and attaches it to `req.data`. |
-| `authorize` | Checks ABAC permissions for the requested action. |
-
----
-
-## Database Schema
-
-The database schema is defined in:
-
-```text
-prisma/schema.prisma
-```
-
-### User
-
-Represents application users.
-
-| Field | Type | Notes |
-|---|---|---|
-| `id` | Int | Primary key. |
-| `email` | String | Unique email, max 50 characters. |
-| `phone` | String? | Optional, unique, max 20 characters. |
-| `password` | String | Hashed password. |
-| `role` | UserRole | Defaults to `User`. |
-| `full_name` | String | User full name. |
-| `bio` | String? | Optional. |
-| `birthdate` | DateTime? | Optional date. |
-| `city` | String? | Optional, max 50 characters. |
-| `createdAt` | DateTime? | Defaults to current timestamp. |
-
-Relations:
-
-- One user has many posts.
-- One user has many comments.
-- One user has many reports.
-- One user has many reactions.
-
----
-
-### Post
-
-Represents user-created posts.
-
-| Field | Type | Notes |
-|---|---|---|
-| `id` | Int | Primary key. |
-| `userId` | Int | Owner user ID. |
-| `category` | String | Max 20 characters. |
-| `title` | String | Max 100 characters. |
-| `description` | String? | Optional. |
-| `createdAt` | DateTime? | Defaults to current timestamp. |
-
-Relations:
-
-- Post belongs to one user.
-- Post has many comments.
-- Post has many reports.
-- Post has many reactions.
-
----
-
-### Comment
-
-Represents comments on posts.
-
-| Field | Type | Notes |
-|---|---|---|
-| `id` | Int | Primary key. |
-| `postId` | Int | Related post ID. |
-| `userId` | Int | Comment owner ID. |
-| `content` | String | Comment content. |
-| `rating` | Float? | Optional rating. |
-| `createdAt` | DateTime? | Defaults to current timestamp. |
-
-Delete behavior:
-
-- If the related post is deleted, comments are deleted.
-- If the related user is deleted, comments are deleted.
-
----
-
-### Report
-
-Represents reports submitted by users against posts.
-
-| Field | Type | Notes |
-|---|---|---|
-| `id` | Int | Primary key. |
-| `userId` | Int | Report owner ID. |
-| `postId` | Int | Reported post ID. |
-| `reason` | String | Report reason. |
-| `createdAt` | DateTime? | Defaults to current timestamp. |
-
-Constraint:
-
-```prisma
-@@unique([userId, postId])
-```
-
-This prevents the same user from creating duplicate reports for the same post.
-
----
-
-### Reaction
-
-Represents user reactions on posts.
-
-| Field | Type | Notes |
-|---|---|---|
-| `id` | Int | Primary key. |
-| `userId` | Int | Reaction owner ID. |
-| `postId` | Int | Related post ID. |
-| `reaction` | Int | Reaction value. |
-| `createdAt` | DateTime? | Defaults to current timestamp. |
-
-Constraint:
-
-```prisma
-@@unique([userId, postId])
-```
-
-This prevents the same user from creating duplicate reactions for the same post.
-
----
-
-## Swagger / OpenAPI Documentation
-
-Swagger is configured in:
-
-```text
-config/swagger.js
-```
-
-The OpenAPI spec is generated from comments inside:
-
-```text
-controllers/*.js
-```
-
-Swagger UI options include:
-
-```js
-withCredentials: true
-persistAuthorization: true
-```
-
-The Swagger request interceptor:
-
-1. Sends requests with credentials.
-2. Detects unsafe methods.
-3. Fetches `/api/csrf-token` if no token exists in `sessionStorage`.
-4. Adds the CSRF token to the `x-csrf-token` header.
-5. Clears the saved CSRF token on `401` or `403`.
-
-This makes Swagger usable with session authentication and CSRF protection.
-
----
-
-## Swagger Model Schemas
-
-Swagger UI shows the **Schemas** section when reusable schemas are defined under `components.schemas` in the OpenAPI definition.
-
-The project should define schemas for:
-
-- `User`
-- `Post`
-- `Comment`
-- `Report`
-- `Reaction`
-
-It is also useful to define request and response schemas such as:
-
-- `RegisterRequest`
-- `LoginRequest`
-- `PostRequest`
-- `CommentRequest`
-- `ReportRequest`
-- `ReactionRequest`
-- `MessageResponse`
-- `ValidationErrorResponse`
-
-Add the following `components` object inside the `definition` object in `config/swagger.js`.
-
-```js
-components: {
-  securitySchemes: {
-    cookieAuth: {
-      type: "apiKey",
-      in: "cookie",
-      name: "sid",
-      description: "Session cookie used for authentication."
-    },
-    csrfToken: {
-      type: "apiKey",
-      in: "header",
-      name: "x-csrf-token",
-      description: "CSRF token required for unsafe methods: POST, PUT, PATCH, DELETE."
-    }
-  },
-  schemas: {
-    User: {
-      type: "object",
-      properties: {
-        id: { type: "integer", example: 1 },
-        full_name: { type: "string", example: "Ahmad Ali" },
-        email: { type: "string", format: "email", example: "user@example.com" },
-        phone: { type: "string", nullable: true, example: "+970599000000" },
-        role: { type: "string", enum: ["Admin", "User"], example: "User" },
-        bio: { type: "string", nullable: true, example: "Software engineering student." },
-        birthdate: { type: "string", format: "date", nullable: true, example: "2000-01-15" },
-        city: { type: "string", nullable: true, example: "Gaza" },
-        createdAt: { type: "string", format: "date-time", nullable: true }
-      }
-    },
-
-    Post: {
-      type: "object",
-      properties: {
-        id: { type: "integer", example: 1 },
-        userId: { type: "integer", example: 7 },
-        category: { type: "string", example: "News" },
-        title: { type: "string", example: "My first post" },
-        description: { type: "string", nullable: true, example: "This is the post description." },
-        createdAt: { type: "string", format: "date-time", nullable: true }
-      }
-    },
-
-    Comment: {
-      type: "object",
-      properties: {
-        id: { type: "integer", example: 1 },
-        postId: { type: "integer", example: 1 },
-        userId: { type: "integer", example: 7 },
-        content: { type: "string", example: "This post was really helpful." },
-        rating: { type: "number", format: "float", nullable: true, example: 5 },
-        createdAt: { type: "string", format: "date-time", nullable: true }
-      }
-    },
-
-    Report: {
-      type: "object",
-      properties: {
-        id: { type: "integer", example: 1 },
-        userId: { type: "integer", example: 7 },
-        postId: { type: "integer", example: 1 },
-        reason: { type: "string", example: "This post contains inappropriate content." },
-        createdAt: { type: "string", format: "date-time", nullable: true }
-      }
-    },
-
-    Reaction: {
-      type: "object",
-      properties: {
-        id: { type: "integer", example: 1 },
-        userId: { type: "integer", example: 7 },
-        postId: { type: "integer", example: 1 },
-        reaction: { type: "integer", example: 1 },
-        createdAt: { type: "string", format: "date-time", nullable: true }
-      }
-    },
-
-    RegisterRequest: {
-      type: "object",
-      required: ["full_name", "email", "password"],
-      properties: {
-        full_name: { type: "string", example: "Ahmad Ali" },
-        email: { type: "string", format: "email", example: "user@example.com" },
-        password: { type: "string", format: "password", example: "StrongPassword123" }
-      }
-    },
-
-    LoginRequest: {
-      type: "object",
-      required: ["email", "password"],
-      properties: {
-        email: { type: "string", format: "email", example: "user@example.com" },
-        password: { type: "string", format: "password", example: "StrongPassword123" }
-      }
-    },
-
-    PostRequest: {
-      type: "object",
-      required: ["category", "title"],
-      properties: {
-        category: { type: "string", minLength: 3, maxLength: 20, example: "News" },
-        title: { type: "string", minLength: 5, maxLength: 100, example: "My first post" },
-        description: { type: "string", minLength: 8, maxLength: 1000, nullable: true, example: "This is the post description." }
-      }
-    },
-
-    CommentRequest: {
-      type: "object",
-      required: ["content"],
-      properties: {
-        content: { type: "string", minLength: 3, maxLength: 500, example: "This post was really helpful." },
-        rating: { type: "number", minimum: 0, maximum: 5, default: 0, example: 5 }
-      }
-    },
-
-    ReportRequest: {
-      type: "object",
-      required: ["reason"],
-      properties: {
-        reason: { type: "string", minLength: 8, maxLength: 1000, example: "This post contains inappropriate content." }
-      }
-    },
-
-    ReactionRequest: {
-      type: "object",
-      required: ["reaction"],
-      properties: {
-        reaction: { type: "integer", minimum: 0, maximum: 100, example: 1 }
-      }
-    },
-
-    MessageResponse: {
-      type: "object",
-      properties: {
-        message: { type: "string", example: "Operation successful" }
-      }
-    },
-
-    ValidationErrorResponse: {
-      type: "object",
-      properties: {
-        message: {
-          type: "array",
-          items: { type: "object" },
-          example: [
-            {
-              path: ["title"],
-              message: "Minimum length of title is 5"
-            }
-          ]
-        }
-      }
-    }
-  }
-}
-```
-
-After this change, Swagger UI will display these model schemas in the **Schemas** section, similar to the screenshot.
-
-A ready-to-use version is included in the accompanying `swagger.with-schemas.js` file.
-
----
-
-## API Routes
-
-### Authentication and Users
-
-| Method | Route | Description | Access |
-|---|---|---|---|
-| `POST` | `/auth/login` | Login user and generate CSRF token | Public |
-| `POST` | `/auth/logout` | Destroy current session and clear cookies | Authenticated |
-| `POST` | `/user/register` | Register new user | Public |
-| `GET` | `/user/profile` | Get current authenticated user profile | Authenticated |
-
----
+Inactive users are rejected during login. For authenticated requests, the user is reloaded from PostgreSQL so deleted accounts and role changes take effect without waiting for the session to expire.
+
+## API routes
+
+Express mounts the routes below at `/`. All unsafe routes also require the CSRF header described above.
+
+### Health, CSRF, and documentation
+
+| Method | Route | Access | Description |
+| --- | --- | --- | --- |
+| `GET` | `/keep-alive` | Public | Health/keep-alive response. |
+| `GET` | `/csrf-token` | Public | Create or reuse a session CSRF token. |
+| `GET` | `/api-docs` | Admin | Swagger UI and its assets. |
+
+### Authentication and users
+
+| Method | Route | Access | Description |
+| --- | --- | --- | --- |
+| `POST` | `/auth/login` | Public | Log in and rotate the CSRF token. |
+| `POST` | `/user/register` | Public | Register a user with the default `User` role. |
+| `POST` | `/auth/logout` | Authenticated | Destroy the session and clear the `sid` cookie. |
+| `GET` | `/user/profile` | Authenticated | Return the current user's private profile. |
+| `PUT` | `/user/profile` | Authenticated | Replace the current user's profile fields. |
+| `GET` | `/user/profile/:id` | Authenticated | Return another user's public profile. |
+| `GET` | `/user/posts` | Authenticated | List the current user's posts. |
+| `GET` | `/users` | Admin | List all users. |
+| `POST` | `/user` | Admin | Create a managed user. |
+| `PUT` | `/user/:id` | Admin | Update a managed user; user ID `1` is protected. |
+| `DELETE` | `/user/:id` | Admin | Delete a managed user; user ID `1` is protected. |
 
 ### Posts
 
-| Method | Route | Description | Access |
-|---|---|---|---|
-| `POST` | `/post` | Create a new post | Authenticated |
-| `GET` | `/post/:id` | Retrieve one post | Authenticated |
-| `PUT` | `/post/:id` | Update a post | Owner or Admin |
-| `DELETE` | `/post/:id` | Delete a post | Owner or Admin |
-
----
-
-### Comments
-
-| Method | Route | Description | Access |
-|---|---|---|---|
-| `POST` | `/comment/:post_id` | Create comment on a post | Authenticated |
-| `GET` | `/comment/:id` | Retrieve one comment | Authenticated |
-| `PUT` | `/comment/:id` | Update a comment | Owner or Admin |
-| `DELETE` | `/comment/:id` | Delete a comment | Owner or Admin |
-
----
-
-### Reports
-
-| Method | Route | Description | Access |
-|---|---|---|---|
-| `POST` | `/report/:post_id` | Create or update report for a post | Authenticated |
-| `GET` | `/report/:id` | Retrieve one report | Owner or Admin |
-| `PUT` | `/report/:id` | Update report | Owner or Admin |
-| `DELETE` | `/report/:id` | Delete report | Owner or Admin |
-
----
-
-### Reactions
-
-| Method | Route | Description | Access |
-|---|---|---|---|
-| `POST` | `/reaction/:post_id` | Create or update reaction for a post | Authenticated |
-| `GET` | `/reaction/:id` | Retrieve one reaction | Authenticated |
-| `PUT` | `/reaction/:id` | Update reaction | Owner or Admin |
-| `DELETE` | `/reaction/:id` | Delete reaction | Owner or Admin |
-
----
-
-### CSRF
-
-| Method | Route | Description | Access |
-|---|---|---|---|
-| `GET` | `/csrf-token` | Generate CSRF token for the current session | Public/session-aware |
-
----
-
-### Swagger
-
-| Method | Route | Description | Access |
-|---|---|---|---|
-| `GET` | `/api-docs` | Swagger API documentation | Admin only |
-
----
-
-## Validation Rules
-
-### User Register
-
-```js
-full_name: string, min 3
-email: valid email
-password: string, min 8
-```
-
-### User Login
-
-```js
-email: valid email
-password: string, min 8
-```
-
-### Post
-
-```js
-category: string, min 3, max 20
-title: string, min 5, max 100
-description: optional string, min 8, max 1000
-```
-
-### Comment
-
-```js
-content: string, min 3, max 500
-rating: number, min 0, max 5, default 0
-```
-
-### Report
-
-```js
-reason: string, min 8, max 1000
-```
-
-### Reaction
-
-```js
-reaction: integer, min 0, max 100
-```
-
-### Route Parameters
-
-Route parameters are validated using:
-
-```js
-/^\d{1,9}$/
-```
-
-If valid, the parameter is converted from string to number.
-
----
-
-## Response Handling
-
-Responses are centralized in:
-
-```text
-helper/messages.js
-```
-
-| Helper | Status Code | Meaning |
-|---|---:|---|
-| `success` | `200` | General successful operation. |
-| `createdSuccessfully` | `201` | Resource created successfully. |
-| `deletedSuccessfully` | `204` | Resource deleted successfully. |
-| `badRequest` | `400` | Validation or bad request error. |
-| `Unauthenticated` | `401` | User is not logged in. |
-| `Unauthorized` | `403` | User does not have permission. |
-| `notFound` | `404` | Resource not found. |
-| `alreadyExists` | `409` | Duplicate resource. |
-| `serverError` | `500` | Server error. |
-| `notImplemented` | `501` | Feature not implemented. |
-
----
-
-## Security Notes
-
-### Password Security
-
-Passwords are hashed using `bcryptjs` before storage.
-
-Current hash cost:
-
-```js
-const HASH_COST_FACTOR = 12;
-```
-
-### Session Security
-
-The project uses server-side sessions instead of storing authentication data in the browser.
-
-The browser stores only the session ID cookie. The actual session data is stored in PostgreSQL.
-
-### CSRF Security
-
-The CSRF token is bound to the current session ID:
-
-```js
-getSessionIdentifier: (req) => req.sessionID
-```
-
-This prevents a token from being reused across different sessions.
-
-### CORS Security
-
-CORS is configured with one frontend origin:
-
-```js
-origin: process.env.FRONTEND_URL
-```
-
-Credentials are enabled:
-
-```js
-credentials: true
-```
-
-This is required because the frontend sends cookies with API requests.
-
-### HTTPS Requirement
-
-The project uses secure cookies. In production, that is correct.
-
-For local HTTP development, secure cookies may not be stored by the browser. Use local HTTPS or temporarily disable secure cookies in development only.
-
----
-
-## Useful npm Scripts
-
-| Script | Command | Description |
-|---|---|---|
-| `npm start` | `node server.js` | Starts the Express server. |
-| `npm run build` | `prisma generate` | Generates Prisma Client. |
-| `npm run db:push` | `prisma db push` | Pushes Prisma schema to DB in development. |
-| `npm run db:push:force` | `prisma db push --accept-data-loss` | Pushes schema and accepts data loss. Use carefully. |
-| `npm run db:deploy` | `prisma migrate deploy` | Applies production migrations. |
-| `npm run prisma:studio` | `prisma studio` | Opens Prisma Studio. |
-
----
-
-## Future Improvements
-
-Recommended next steps:
-
-1. Add a `.env.example` file.
-2. Add a `dev` script using `nodemon`.
-3. Add centralized error-handling middleware.
-4. Add rate limiting for login and unsafe routes.
-5. Add request logging.
-6. Add automated tests.
-7. Add Prisma migrations and commit `prisma/migrations`.
-8. Add pagination for list endpoints.
-9. Add indexes for frequently queried fields.
-10. Add account update and password reset flows.
-11. Add email verification if public registration is enabled.
-12. Harden the permission engine with optional chaining for missing role/resource/action keys.
-13. Refactor Swagger endpoint comments to use `$ref` schemas from `components.schemas`.
-14. Add health check endpoint for deployment monitoring.
-15. Rename `permissions/roles.js` to something like `permissions/policies.js` if you want the code naming to match ABAC more clearly.
-
----
-
-## Summary
-
-This backend provides a solid foundation for a secure graduation project API.
-
-It includes:
-
-- Express API routing.
-- Prisma ORM with PostgreSQL.
-- User registration and login.
-- Password hashing.
-- Server-side sessions.
-- PostgreSQL session storage.
-- CSRF protection.
-- ABAC authorization with ownership checks.
-- Zod request validation.
-- Resource loading middleware.
-- Swagger API documentation.
-- Reusable Swagger model schemas.
-- Render-ready deployment configuration.
-
-The architecture is clean and practical: each middleware does one job, controllers stay focused on business logic, Prisma handles database access, and the permission engine controls access based on the user's attributes and the resource's attributes.
+| Method | Route | Access | Description |
+| --- | --- | --- | --- |
+| `POST` | `/post` | Authenticated | Create a post. |
+| `GET` | `/posts` | Authenticated | List posts with filters, viewer state, and statistics. |
+| `GET` | `/post/:id/details` | Authenticated | Return a post and its comments/statistics. |
+| `GET` | `/post/:id` | Authenticated | Return the raw post record. |
+| `GET` | `/posts/user/:id` | Authenticated | List a selected user's posts. |
+| `PUT` | `/post/:id` | Owner or Admin | Update a post. |
+| `DELETE` | `/post/:id` | Owner or Admin | Delete a post. |
+
+### Comments, reports, and reactions
+
+| Method | Route | Access | Description |
+| --- | --- | --- | --- |
+| `POST` | `/comment/:post_id` | Authenticated | Add a comment to a post. |
+| `GET` | `/comment/:id` | Authenticated | Return a comment. |
+| `PUT` | `/comment/:id` | Owner or Admin | Update a comment. |
+| `DELETE` | `/comment/:id` | Owner or Admin | Delete a comment. |
+| `POST` | `/report/:post_id` | Authenticated | Create or replace the current user's report for a post. |
+| `GET` | `/report/:id` | Owner or Admin | Return a report. |
+| `GET` | `/reports` | Admin | List and search reports. |
+| `PUT` | `/report/:id` | Owner or Admin | Update a report. |
+| `DELETE` | `/report/:id` | Owner or Admin | Delete a report. |
+| `DELETE` | `/report/post/:post_id` | Authenticated | Delete the current user's report for a post. |
+| `POST` | `/reaction/:post_id` | Authenticated | Create or replace the current user's reaction to a post. |
+| `GET` | `/reaction/:id` | Authenticated | Return a reaction. |
+| `PUT` | `/reaction/:id` | Owner or Admin | Update a reaction. |
+| `DELETE` | `/reaction/:id` | Owner or Admin | Delete a reaction. |
+| `DELETE` | `/reaction/post/:post_id` | Authenticated | Delete the current user's reaction to a post. |
+
+### Categories
+
+| Method | Route | Access | Description |
+| --- | --- | --- | --- |
+| `GET` | `/categories` | Authenticated | List/search categories with post counts. |
+| `POST` | `/category` | Admin | Create a category. |
+| `PUT` | `/category/:id` | Admin | Update a category; category ID `1` is protected. |
+| `DELETE` | `/category/:id` | Admin | Delete a category; category ID `1` is protected. |
+
+## Query parameters
+
+The post-list endpoints (`/posts`, `/user/posts`, and `/posts/user/:id`) accept:
+
+| Parameter | Description |
+| --- | --- |
+| `page` and `limit` | Positive integers. When paginating, both must be supplied together. |
+| `search` | Case-insensitive search term. |
+| `searchIn` | Restrict `search` to `title` or `description`; requires `search`. |
+| `category` | Case-insensitive category-name filter with a minimum length of three. |
+
+`/categories` and `/reports` accept optional `page`, `limit`, and `search` values. Their current schemas do not require `page` and `limit` to be supplied together.
+
+`/post/:id/details` passes `page` and `limit` directly to comment pagination. Supply both values as positive integers; unlike the post-list endpoints, this route does not currently validate these query parameters.
+
+## Authorization
+
+The policy engine combines the authenticated user's role with the requested action and, where necessary, the loaded resource:
+
+- `Admin` can manage users, posts, comments, reports, reactions, and categories, list reports/users, and open Swagger UI.
+- `User` can create and view application content, but can update or delete only their own posts, comments, reports, and reactions.
+- Only admins can create, update, or delete categories and manage other user accounts through `/user/:id`.
+- Resource loaders fetch the target row before owner-sensitive policy checks.
+
+## npm scripts
+
+| Command | Action |
+| --- | --- |
+| `npm start` | Run `node server.js`; environment variables must already be available. |
+| `npm run build` | Generate Prisma Client. |
+| `npm run db:push` | Push the Prisma schema to the configured database. |
+| `npm run db:push:force` | Push the schema while accepting possible data loss. Use with care. |
+| `npm run prisma:studio` | Open Prisma Studio. |
+
+`postinstall` also generates Prisma Client automatically. `npm run db:seed` is declared in `package.json`, but `prisma/seed.js` is not present in this repository.
+
+## Deployment notes
+
+For a hosted Node service:
+
+- Build command: `npm run build`
+- Start command: `npm start`
+- Provide `DATABASE_URL`, `SESSION_SECRET`, `FRONTEND_URL`, and `NODE_ENV=production` through the platform.
+- Run `npm run db:push` against the production database before the application starts if the schema has not been created by another release process.
+- Terminate HTTPS in front of Express. The server trusts one proxy hop and enables secure cookies in production.
+- Make sure the frontend sends credentialed requests and that `FRONTEND_URL` exactly matches its origin.
+
+The Swagger specification currently advertises `/api` as its server URL, while Express itself mounts routes at `/`. A deployment that exposes the API under `/api` must provide the corresponding proxy/rewrite behavior.
+
+## Current implementation notes
+
+- `middlewares/rateLimiter.js` contains an Upstash Redis fixed-window login limiter, but `router.js` does not import or attach it, so rate limiting is not active.
+- `config/redis.js` and the Redis environment variables are therefore not needed for the current request path.
+- There is currently no automated test script in `package.json`.
+
+## License
+
+No license file is currently included in this repository.
