@@ -157,6 +157,12 @@ Prisma reads `DATABASE_URL` from the environment. The current repository contain
 
 Deleting a user or post cascades to its dependent records. The session store is configured with `createTableIfMissing: false`, so the `session` table must exist before the server handles sessions; `npm run db:push` creates it from the Prisma schema.
 
+## Database Design
+
+You can view the database schema here:
+
+[View the ERD diagram on DrawSQL](https://drawsql.app/teams/saeeda/diagrams/graduation-project)
+
 ## Authentication and CSRF
 
 Authentication is stored server-side in PostgreSQL. The browser receives an HTTP-only `sid` cookie. In production the cookie is marked `Secure`; `SameSite` is `lax`. The persistent lifetime is seven days, while a login with `rememberMe: false` changes it to a browser-session cookie.
