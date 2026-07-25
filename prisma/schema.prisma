@@ -51,7 +51,7 @@ model Post {
 	createdAt   DateTime? @default(now()) @map("created_at") @db.Timestamp(0)
 
 	user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-	category  Category    @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+	category  Category    @relation(fields: [categoryId], references: [id], onDelete: SetDefault)
 	comments  Comment[]
 	reports   Report[]
 	reactions Reaction[]
