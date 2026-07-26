@@ -194,9 +194,9 @@ const postDetails = async (req, res) => {
 		const post_id = req.params.id;
 		const user_id = req.user.id;
 
-		const { page, limit } = req.query;
+		const { commentsPage, commentsLimit } = req.query;
 		
-		const posts = await postRepository.listPostWithDetails(post_id, page, limit, user_id)
+		const posts = await postRepository.listPostWithDetails(post_id, commentsPage, commentsLimit, user_id)
 
 		return res.json(posts);
 
