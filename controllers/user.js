@@ -232,6 +232,9 @@ const register = async (req, res) => {
  *             schema:
  *               type: object
  *               properties:
+ *                 id:
+ *                   type: number
+ *                   example: Ahmad Ali
  *                 full_name:
  *                   type: string
  *                   example: Ahmad Ali
@@ -264,6 +267,7 @@ const register = async (req, res) => {
 
 const profile = async (req, res) => {
 	try {
+		const id = req.user.id;
 		const full_name = req.user.full_name;
 		const email = req.user.email;
 		const phone = req.user.phone;
@@ -272,7 +276,7 @@ const profile = async (req, res) => {
 		const city = req.user.city;
 		const role = req.user.role;
 
-		const user = { full_name, email, phone, birthdate, bio, city, role };
+		const user = { id, full_name, email, phone, birthdate, bio, city, role };
 
 		return res.json(user);
 
@@ -876,7 +880,7 @@ const update = async (req, res) => {
  *                 properties:
  *                   id:
  *                     type: integer
- *                     example: 1
+ *                     example: 10
  *                   full_name:
  *                     type: string
  *                     example: Ahmad Ali
