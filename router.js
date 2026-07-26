@@ -136,7 +136,7 @@ router.get(
 router.get(
 	"/post/:id/details", 
 	authenticate, 
-	validate({ params: parameterValidator.id }), 
+	validate({ params: parameterValidator.id, query: queryValidator.postDetails }), 
 	postController.postDetails
 );
 

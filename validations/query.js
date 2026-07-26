@@ -44,12 +44,29 @@ const post = z
 		}
 	);
 
+const postDetails = z.object({
+		commentsPage: z
+			.coerce
+			.number("Comments page query must be a number")
+			.int("Comments page query must be an integer")
+			.min(1, "Comments page should be at least 1")
+			.optional(),
+		commentsLimit: z
+			.coerce
+			.number("Comments limit query must be a number")
+			.int("Comments limit query must be an integer")
+			.min(1, "Comments limit should be at least 1")
+			.optional()
+});
+
 const category = z.object(pagination_search);
+
 
 const report = z.object(pagination_search);
 
 module.exports = {
 	post,
+	postDetails,
 	category,
 	report
 };
